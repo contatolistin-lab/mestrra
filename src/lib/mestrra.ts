@@ -36,6 +36,54 @@ export function unitCost(regular: number, promo: number | null, quantity: number
   if (quantity <= 0) return 0;
   return (active && promo && promo > 0 ? promo : regular) / quantity;
 }
+
+export type PricingValidation = {
+  name: string;
+  totalMinutes: number;
+  hourly: number;
+  fixedPercent: number;
+  taxPercent: number;
+  margin: number;
+  promo: number;
+  cost: number;
+  price: number;
+  priceValid: boolean;
+  recipes: { inventory_item_id: string; quantity_used: number }[];
+};
+
+export function pricingError(input: PricingValidation): string | null {
+  if (!input.name.trim()) return "Informe o nome do item.";
+  if (!input.priceValid || input.price <= 0) {
+    return "Ajuste taxas e margem para obter um preço válido.";
+  }
+  const values = [
+    input.totalMinutes,
+    input.hourly,
+    input.fixedPercent,
+    input.taxPercent,
+    input.margin,
+    input.promo,
+    input.cost,
+  ];
+  if (values.some((value) => !Number.isFinite(value) || value < 0)) {
+    return "Valores negativos ou inválidos não são permitidos.";
+  }
+  if (input.totalMinutes === 0 && input.recipes.length === 0) {
+    return "Informe o tempo de execução ou pelo menos um insumo.";
+  }
+  if (
+    input.recipes.some(
+      (row) =>
+        !row.inventory_item_id || !Number.isFinite(row.quantity_used) || row.quantity_used <= 0,
+    )
+  ) {
+    return "Informe um insumo e uma quantidade maior que zero em cada linha da ficha técnica.";
+  }
+  if (input.promo > 0 && input.promo < input.cost) {
+    return "O preço promocional não pode ficar abaixo do custo.";
+  }
+  return null;
+}
 export const routeMeta = (title: string, description: string) => ({
   meta: [
     { title: `${title} · Mestrra` },

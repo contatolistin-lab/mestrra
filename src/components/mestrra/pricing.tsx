@@ -17,7 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
-import { money, priceCalculation } from "@/lib/mestrra";
+import { money, priceCalculation, pricingError } from "@/lib/mestrra";
 import { toast } from "sonner";
 
 type RecipeRow = { key: string; inventory_item_id: string; quantity_used: number };
@@ -110,8 +110,11 @@ export function Pricing({ data }: { data: BusinessData }) {
         ? (item.labor_cost / item.execution_minutes) * 60
         : data.profile?.hourly_rate || 31.25,
     );
+    const savedCost = item.total_unit_cost || item.materials_cost + item.labor_cost;
     setFixed(
-      item.fixed_cost_allocation && calc.cost ? (item.fixed_cost_allocation / calc.cost) * 100 : 10,
+      item.fixed_cost_allocation && savedCost > 0
+        ? (item.fixed_cost_allocation / savedCost) * 100
+        : 10,
     );
     setTax(item.platform_tax_percent);
     setMargin(item.desired_margin_percent);
@@ -141,8 +144,21 @@ export function Pricing({ data }: { data: BusinessData }) {
   }
 
   async function save(goToCopiloto: boolean) {
-    if (!name.trim() || !calc.valid) {
-      toast.error("Preencha o nome e ajuste taxas e margem para obter um preço válido.");
+    const error = pricingError({
+      name,
+      totalMinutes,
+      hourly,
+      fixedPercent: fixed,
+      taxPercent: tax,
+      margin,
+      promo,
+      cost: calc.cost,
+      price: calc.price,
+      priceValid: calc.valid,
+      recipes,
+    });
+    if (error) {
+      toast.error(error);
       return;
     }
     setSaving(true);

@@ -230,11 +230,23 @@ export function InventoryForm({
     e.preventDefault();
     setBusy(true);
     const f = new FormData(e.currentTarget);
+    const nextUnit = formText(f, "unit");
+    if (
+      item &&
+      nextUnit !== item.unit_type &&
+      data.recipes.some((row) => row.inventory_item_id === item.id)
+    ) {
+      setBusy(false);
+      toast.error(
+        "Não é possível trocar a unidade base enquanto o insumo estiver em uma ficha técnica. Remova-o da receita antes.",
+      );
+      return;
+    }
     const input = {
       user_id: data.userId,
       name: formText(f, "name"),
       category: formText(f, "category"),
-      unit_type: formText(f, "unit"),
+      unit_type: nextUnit,
       package_quantity: quantity,
       regular_price: regular,
       promo_price: promo || null,

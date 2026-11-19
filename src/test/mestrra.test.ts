@@ -1,7 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { generateCopy, phoneMask, priceCalculation, unitCost } from "@/lib/mestrra";
+import { beforeEach, describe, expect, it } from "vitest";
+import { demoSupabase } from "@/integrations/supabase/demo-client";
+import { generateCopy, phoneMask, priceCalculation, pricingError, unitCost } from "@/lib/mestrra";
+import { getDemoData, resetDemoData } from "@/lib/demo-store";
+import { requiredStock } from "@/lib/stock";
 
 describe("Mestrra business rules", () => {
+  beforeEach(() => {
+    resetDemoData();
+  });
+
   it("calculates cost, tax and suggested price", () => {
     const result = priceCalculation(100, 60, 50, 10, 0, 50);
     expect(result.labor).toBe(50);
@@ -40,5 +47,43 @@ describe("Mestrra business rules", () => {
 
   it("masks Brazilian phone numbers", () => {
     expect(phoneMask("11999990000")).toBe("(11) 99999-0000");
+  });
+
+  it("validates pricing inputs and rejects promo below cost", () => {
+    const base = {
+      name: "Brownie",
+      totalMinutes: 30,
+      hourly: 50,
+      fixedPercent: 10,
+      taxPercent: 4.99,
+      margin: 50,
+      promo: 0,
+      cost: 100,
+      price: 222,
+      priceValid: true,
+      recipes: [{ inventory_item_id: "demo-choc", quantity_used: 150 }],
+    };
+    expect(pricingError(base)).toBeNull();
+    expect(pricingError({ ...base, promo: 90 })).toContain("abaixo do custo");
+    expect(pricingError({ ...base, hourly: -1 })).toContain("negativos");
+    expect(pricingError({ ...base, totalMinutes: 0, recipes: [] })).toContain("tempo de execução");
+  });
+
+  it("multiplies recipe quantity by the sold quantity", () => {
+    const rows = requiredStock(getDemoData(), "demo-brownie", 2);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ id: "demo-choc", needed: 300, available: 2800, unit: "g" });
+  });
+
+  it("deducts demo stock when a sale is registered", async () => {
+    await demoSupabase.rpc("create_sale", { p_item: "demo-brownie", p_quantity: 2 });
+    const chocolate = getDemoData().inventory.find((item) => item.id === "demo-choc");
+    expect(chocolate?.current_stock).toBe(2500);
+  });
+
+  it("blocks demo sales without enough stock", async () => {
+    await expect(
+      demoSupabase.rpc("create_sale", { p_item: "demo-brownie", p_quantity: 100 }),
+    ).rejects.toThrow("Estoque insuficiente");
   });
 });

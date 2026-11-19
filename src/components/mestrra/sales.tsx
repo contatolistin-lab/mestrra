@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
 import { money, phoneMask, shortDate } from "@/lib/mestrra";
+import { requiredStock, stockShortageMessage } from "@/lib/stock";
 import { toast } from "sonner";
 
 export function Sales({
@@ -55,23 +56,13 @@ export function Sales({
       : item.suggested_price
     : 0;
   const total = unitPrice * quantity;
-  const shortage = useMemo(() => {
-    if (!item) return [];
-    return data.recipes
-      .filter((recipe) => recipe.catalog_item_id === item.id)
-      .map((recipe) => {
-        const stock = data.inventory.find((entry) => entry.id === recipe.inventory_item_id);
-        return stock && stock.current_stock < recipe.quantity_used * quantity
-          ? {
-              name: stock.name,
-              available: stock.current_stock,
-              needed: recipe.quantity_used * quantity,
-              unit: stock.unit_type,
-            }
-          : null;
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => !!entry);
-  }, [data.recipes, data.inventory, item, quantity]);
+  const shortage = useMemo(
+    () =>
+      item
+        ? requiredStock(data, item.id, quantity).filter((row) => row.available < row.needed)
+        : [],
+    [data, item, quantity],
+  );
 
   useEffect(() => {
     if (!checkout) {
@@ -108,19 +99,39 @@ export function Sales({
       toast.error("A quantidade deve ser pelo menos 1.");
       return false;
     }
-    if (shortage.length) {
-      toast.error(
-        "Estoque insuficiente: " +
-          shortage
-            .map((entry) => `${entry.name} (${entry.available} ${entry.unit} disponíveis)`)
-            .join(", "),
-      );
+    const message = stockShortageMessage(shortage);
+    if (message) {
+      toast.error(message);
       return false;
     }
     return true;
   }
 
+  async function assertFreshStock() {
+    const requirements = requiredStock(data, itemId, quantity);
+    if (!requirements.length) return;
+    const { data: current, error } = await supabase
+      .from("inventory_items")
+      .select("id,current_stock")
+      .in(
+        "id",
+        requirements.map((row) => row.id),
+      );
+    if (error) throw error;
+    const rows = (Array.isArray(current) ? current : []) as {
+      id: string;
+      current_stock: number;
+    }[];
+    const fresh = requirements.map((row) => ({
+      ...row,
+      available: rows.find((entry) => entry.id === row.id)?.current_stock ?? row.available,
+    }));
+    const message = stockShortageMessage(fresh.filter((row) => row.available < row.needed));
+    if (message) throw new Error(message);
+  }
+
   async function createOrder(paymentMethod: string) {
+    await assertFreshStock();
     const { data: orderId, error } = await supabase.rpc("create_sale", {
       p_item: itemId,
       p_customer: customer.trim(),

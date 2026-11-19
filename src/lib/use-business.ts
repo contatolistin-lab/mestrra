@@ -1,12 +1,12 @@
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessQuery } from "./business-query";
-import { demoBusiness } from "./demo";
+import { getDemoData } from "./demo-store";
 import { isDemoMode } from "./demo-mode";
 import type { BusinessData } from "./business.functions";
 
 const demoQuery = queryOptions({
   ...businessQuery,
-  queryFn: () => Promise.resolve(demoBusiness()),
+  queryFn: () => Promise.resolve(getDemoData()),
 });
 
 export function useBusiness() {

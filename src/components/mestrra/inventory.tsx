@@ -181,7 +181,11 @@ export function Inventory({ data }: { data: BusinessData }) {
                     <div className="flex gap-2 justify-between text-[11px]">
                       <span
                         className={
-                          i.current_stock <= i.min_stock_alert ? "text-primary" : "text-foreground"
+                          i.current_stock < 0
+                            ? "text-destructive"
+                            : i.current_stock <= i.min_stock_alert
+                              ? "text-primary"
+                              : "text-foreground"
                         }
                       >
                         {i.current_stock} {i.unit_type}

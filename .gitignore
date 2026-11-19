@@ -20,7 +20,8 @@ dist-ssr
 .wrangler/
 .dev.vars
 
-# Env — Lovable needs .env committed for VITE_* build-time values
+# Env
+.env
 .env.*
 !.env.example
 

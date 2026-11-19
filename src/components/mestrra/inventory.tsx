@@ -1,0 +1,301 @@
+import { useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Plus,
+  Search,
+  Package,
+  AlertTriangle,
+  PiggyBank,
+  Layers,
+  Pencil,
+  Trash2,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import type { BusinessData } from "@/lib/business.functions";
+import { money } from "@/lib/mestrra";
+import { toast } from "sonner";
+import { Field, FormDialog, InventoryForm, formNumber } from "./forms";
+export function Inventory({ data }: { data: BusinessData }) {
+  const client = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [editing, setEditing] = useState<BusinessData["inventory"][number] | "new" | null>(null);
+  const [restocking, setRestocking] = useState<BusinessData["inventory"][number] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const items = data.inventory.filter(
+    (i) =>
+      i.name.toLowerCase().includes(search.toLowerCase()) &&
+      (filter === "all" ||
+        (filter === "critical" && i.current_stock <= i.min_stock_alert) ||
+        (filter === "promo" && i.is_promo_active)),
+  );
+  async function toggle(id: string, active: boolean) {
+    const { error } = await supabase
+      .from("inventory_items")
+      .update({ is_promo_active: active })
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    else {
+      void client.invalidateQueries({ queryKey: ["business"] });
+      toast.success("Preço ativo atualizado para as próximas precificações.");
+    }
+  }
+  async function remove(item: BusinessData["inventory"][number]) {
+    if (!window.confirm(`Excluir ${item.name}?`)) return;
+    const { error } = await supabase.from("inventory_items").delete().eq("id", item.id);
+    if (error)
+      toast.error(
+        "Este insumo pode estar vinculado a uma ficha técnica. Remova o vínculo antes de excluir.",
+      );
+    else {
+      void client.invalidateQueries({ queryKey: ["business"] });
+      toast.success("Insumo excluído.");
+    }
+  }
+  async function restock(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!restocking) return;
+    setBusy(true);
+    const f = new FormData(e.currentTarget);
+    const { error } = await supabase.rpc("restock_item", {
+      p_id: restocking.id,
+      p_quantity: formNumber(f, "quantity"),
+      p_promo: f.get("promo") === "on",
+      p_expense: f.get("expense") === "on",
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await client.invalidateQueries({ queryKey: ["business"] });
+    toast.success("Compra reposta! Estoque e caixa atualizados.");
+    setRestocking(null);
+  }
+  return (
+    <>
+      <div className="flex justify-between flex-wrap gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-extrabold">
+            Estoque & recursos<span className="text-primary">.</span>
+          </h1>
+          <p className="text-xs text-muted-foreground mt-2">
+            Tudo o que seu negócio precisa, no lugar certo.
+          </p>
+        </div>
+        <Button onClick={() => setEditing("new")}>
+          <Plus />
+          Cadastrar insumo
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {[
+          {
+            label: "Capital em estoque",
+            value: money(
+              data.inventory.reduce((s, i) => s + i.current_stock * (i.unit_cost_active ?? 0), 0),
+            ),
+            icon: Package,
+          },
+          {
+            label: "Itens em alerta",
+            value: data.inventory.filter((i) => i.current_stock <= i.min_stock_alert).length,
+            icon: AlertTriangle,
+          },
+          {
+            label: "Economia promocional",
+            value: money(
+              data.inventory
+                .filter((i) => i.is_promo_active && i.promo_price)
+                .reduce(
+                  (s, i) =>
+                    s +
+                    Math.max(
+                      0,
+                      i.current_stock * ((i.unit_cost_regular ?? 0) - (i.unit_cost_active ?? 0)),
+                    ),
+                  0,
+                ),
+            ),
+            icon: PiggyBank,
+          },
+          { label: "Insumos cadastrados", value: data.inventory.length, icon: Layers },
+        ].map((k) => (
+          <div key={k.label} className="surface metric-card">
+            <div className="flex justify-between text-[11px] text-muted-foreground">
+              {k.label}
+              <k.icon size={16} className="text-info" />
+            </div>
+            <p className="metric-value">{k.value}</p>
+          </div>
+        ))}
+      </div>
+      <section className="surface overflow-hidden">
+        <div className="p-5 flex flex-wrap gap-3 justify-between">
+          <label className="flex gap-2 items-center text-muted-foreground border rounded-md px-3">
+            <Search size={16} />
+            <input
+              aria-label="Buscar insumo"
+              placeholder="Buscar insumo…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="outline-none bg-transparent py-2 text-xs w-44"
+            />
+          </label>
+          <select
+            aria-label="Filtrar insumos"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="native-select text-xs max-w-48"
+          >
+            <option value="all">Todos os insumos</option>
+            <option value="critical">Estoque crítico</option>
+            <option value="promo">Promoção ativa</option>
+          </select>
+        </div>
+        <div className="overflow-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>INSUMO</th>
+                <th>ESTOQUE</th>
+                <th>CUSTO / UNIDADE</th>
+                <th>PREÇO PROMO</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((i) => (
+                <tr key={i.id}>
+                  <td>
+                    <p className="font-semibold whitespace-nowrap">{i.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {i.supplier_name || "Sem fornecedor"} · {i.package_quantity} {i.unit_type}
+                    </p>
+                  </td>
+                  <td className="min-w-36">
+                    <div className="flex gap-2 justify-between text-[11px]">
+                      <span
+                        className={
+                          i.current_stock <= i.min_stock_alert ? "text-primary" : "text-foreground"
+                        }
+                      >
+                        {i.current_stock} {i.unit_type}
+                      </span>
+                      <span className="text-muted-foreground">mín. {i.min_stock_alert}</span>
+                    </div>
+                    <progress
+                      className={`w-full h-1.5 mt-2 ${i.current_stock <= i.min_stock_alert ? "accent-primary" : "accent-info"}`}
+                      value={Math.max(0, i.current_stock)}
+                      max={Math.max(i.min_stock_alert * 3, i.current_stock, 1)}
+                    />
+                  </td>
+                  <td className="whitespace-nowrap">
+                    <p className="font-semibold">
+                      R$ {(i.unit_cost_active ?? 0).toFixed(4).replace(".", ",")} / {i.unit_type}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Normal: R$ {(i.unit_cost_regular ?? 0).toFixed(4).replace(".", ",")}
+                    </p>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        aria-label={`Promoção de ${i.name}`}
+                        checked={i.is_promo_active}
+                        disabled={!i.promo_price}
+                        onCheckedChange={(v) => void toggle(i.id, v)}
+                      />
+                      {i.is_promo_active && <span className="status warning">Promo</span>}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setRestocking(i)}>
+                        <Plus size={12} />
+                        Repor
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Editar insumo"
+                        onClick={() => setEditing(i)}
+                      >
+                        <Pencil size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Excluir insumo"
+                        onClick={() => void remove(i)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!items.length && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-muted-foreground">
+                    Nenhum insumo encontrado. Cadastre o primeiro para começar.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <div className="flex justify-end mt-5">
+        <Button asChild>
+          <Link to="/precificacao">
+            Usar insumos na precificação <ArrowRight />
+          </Link>
+        </Button>
+      </div>
+      <FormDialog
+        title={editing === "new" ? "Cadastrar insumo" : "Editar insumo"}
+        open={!!editing}
+        onClose={() => setEditing(null)}
+      >
+        {editing && (
+          <InventoryForm
+            data={data}
+            {...(editing === "new" ? {} : { item: editing })}
+            onClose={() => setEditing(null)}
+          />
+        )}
+      </FormDialog>
+      <FormDialog
+        title={`Repor ${restocking?.name || "estoque"}`}
+        open={!!restocking}
+        onClose={() => setRestocking(null)}
+      >
+        <form className="space-y-4" onSubmit={restock}>
+          <Field
+            label={`Quantidade comprada (${restocking?.unit_type})`}
+            name="quantity"
+            type="number"
+            min="0.01"
+            required
+          />
+          <label className="flex gap-2 text-xs">
+            <input type="checkbox" name="promo" defaultChecked={restocking?.is_promo_active} />
+            Compra com preço promocional
+          </label>
+          <label className="flex gap-2 text-xs">
+            <input type="checkbox" name="expense" defaultChecked />
+            Lançar saída automática no fluxo de caixa
+          </label>
+          <Button type="submit" disabled={busy} className="w-full">
+            {busy ? "Repondo…" : "Confirmar reposição"}
+          </Button>
+        </form>
+      </FormDialog>
+    </>
+  );
+}

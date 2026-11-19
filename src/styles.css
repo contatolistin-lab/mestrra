@@ -1,0 +1,216 @@
+/*
+ * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
+ * - Keep every @import in this top block, above @theme and the rest of the file. Install an
+ *   npm package before @importing its CSS. Never @import a remote URL (web fonts, CDN CSS): the
+ *   build resolves @import from the filesystem. Load those with a <link> in the head() of
+ *   src/routes/__root.tsx and name the family in a --font-* token in @theme inline below.
+ */
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The design lives in this file: oklch color tokens on the shadcn variables
+ * (--background, --foreground, --primary, --secondary, --muted, --accent, ...) plus
+ * new tokens as needed, font tokens, and custom styles and animations.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --brand: oklch(0.208 0.042 265.755);
+  --brand-foreground: oklch(1 0 0);
+  --info: oklch(0.685 0.169 237.323);
+  --info-soft: oklch(0.951 0.026 236.824);
+  --success: oklch(0.55 0.13 163);
+  --success-soft: oklch(0.96 0.03 163);
+  --warning-soft: oklch(0.97 0.027 70);
+  --radius: 0.75rem;
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.705 0.213 47.604);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.951 0.026 236.824);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+.mestrra-logo { font-size: 29px; font-weight: 800; letter-spacing: 0; display:flex; align-items:center; gap:10px; }
+.brand-mark { width:28px; height:28px; display:grid; grid-template-columns:repeat(2,1fr); gap:3px; transform:rotate(-8deg); }
+.brand-mark i { background:var(--primary); border-radius:3px; }
+.brand-mark i:last-child { background:var(--info); }
+.app-sidebar { width:240px; position:fixed; inset:0 auto 0 0; background:var(--brand); color:var(--brand-foreground); z-index:40; display:flex; flex-direction:column; padding:32px 20px 20px; }
+.sidebar-caption { color:oklch(0.68 0.025 260); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin:32px 12px 12px; }
+.nav-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:7px; color:oklch(0.78 0.025 260); font-size:12px; font-weight:500; margin:3px 0; transition:all .18s; }
+.nav-item:hover { background:oklch(1 0 0 / .06); color:var(--brand-foreground); }
+.nav-item.active { background:oklch(0.685 0.169 237.323 / .13); color:var(--info); box-shadow:inset 3px 0 var(--info); }
+.app-main { margin-left:240px; min-height:100vh; }
+.app-topbar { height:80px; padding:0 36px; display:flex; justify-content:space-between; align-items:center; background:var(--card); border-bottom:1px solid var(--border); }
+.page-content { padding:30px 36px 40px; max-width:1600px; margin:auto; }
+.surface { background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 3px 8px oklch(0.208 0.042 265.755 / .025); }
+.step-bar { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; padding:18px 22px; }
+.step-link { display:flex; gap:10px; align-items:center; font-size:11px; color:var(--muted-foreground); font-weight:600; }
+.step-link .step-number { width:29px; height:29px; display:grid; place-items:center; border-radius:50%; background:var(--muted); font-size:11px; flex-shrink:0; }
+.step-link.active { color:var(--info); }
+.step-link.active .step-number { background:var(--info-soft); color:var(--info); }
+.step-link.done .step-number { background:var(--success-soft); color:var(--success); }
+.metric-card { padding:20px; min-width:0; }
+.metric-value { font-size:25px; font-weight:800; line-height:1.4; margin:14px 0 7px; }
+.metric-card.highlight { background:var(--brand); color:var(--brand-foreground); border-color:var(--brand); }
+.section-heading { font-size:15px; font-weight:700; }
+.status { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:5px; font-size:10px; font-weight:600; background:var(--success-soft); color:var(--success); white-space:nowrap; }
+.status.warning { color:var(--primary); background:var(--warning-soft); }
+.status.info { color:var(--info); background:var(--info-soft); }
+.data-table { width:100%; border-collapse:collapse; text-align:left; font-size:12px; }
+.data-table th { color:var(--muted-foreground); font-size:10px; font-weight:600; padding:13px 20px; background:var(--background); border-block:1px solid var(--border); }
+.data-table td { padding:16px 20px; border-bottom:1px solid var(--border); }
+.data-table tr:last-child td { border-bottom:0; }
+.field { display:flex; flex-direction:column; gap:7px; font-size:12px; font-weight:600; }
+.field input,.field select,.field textarea,.native-select { min-height:41px; border:1px solid var(--input); border-radius:7px; background:var(--card); color:var(--foreground); font:inherit; padding:10px 12px; width:100%; }
+.field input:focus,.field select:focus,.field textarea:focus { outline:2px solid var(--info-soft); border-color:var(--info); }
+.bottom-nav { display:none; }
+.auth-layout { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+.auth-brand { background:var(--brand); color:var(--brand-foreground); padding:60px; display:flex; flex-direction:column; justify-content:space-between; }
+.auth-form { display:flex; flex-direction:column; justify-content:center; padding:60px; max-width:560px; width:100%; margin:auto; }
+.icon-tile { height:38px; width:38px; border-radius:9px; background:var(--info-soft); color:var(--info); display:grid; place-items:center; flex-shrink:0; }
+.rise-in { animation:rise-in .4s ease-out both; }
+@keyframes rise-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (max-width:1100px) { .app-sidebar{width:210px}.app-main{margin-left:210px}.page-content{padding:24px}.app-topbar{padding:0 24px}.metric-value{font-size:22px}.step-link{font-size:10px;gap:7px}.step-bar{padding:16px;gap:7px} }
+@media (max-width:767px) { .app-sidebar{display:none}.app-main{margin-left:0}.app-topbar{height:68px;padding:0 20px}.page-content{padding:20px 16px 90px}.bottom-nav{display:flex;position:fixed;bottom:0;inset-inline:0;height:68px;background:var(--card);border-top:1px solid var(--border);z-index:45;justify-content:space-around;align-items:center}.bottom-nav a{font-size:9px;display:flex;flex-direction:column;gap:5px;align-items:center;color:var(--muted-foreground)}.bottom-nav a.active{color:var(--info)}.step-bar{overflow:auto;display:flex;gap:20px}.step-link{min-width:105px;font-size:10px}.metric-card{padding:16px}.metric-value{font-size:22px}.auth-layout{grid-template-columns:1fr}.auth-brand{padding:28px;min-height:220px}.auth-brand h1{font-size:26px}.auth-form{padding:32px 24px}.data-table td,.data-table th{padding:12px}.mestrra-logo{font-size:25px} }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after{animation:none!important;transition:none!important} }

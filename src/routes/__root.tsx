@@ -87,13 +87,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Gestão, precificação e vendas para o seu negócio." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Mestrra · Seu negócio em movimento" },
-      { property: "og:description", content: "Estoque, precificação, marketing, vendas e caixa conectados." },
+      {
+        property: "og:description",
+        content: "Estoque, precificação, marketing, vendas e caixa conectados.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795056027494,
+      "tag": "0000_mestrra_business_platform",
+      "breakpoints": true
+    }
+  ]
 }

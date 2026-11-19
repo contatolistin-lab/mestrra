@@ -14,13 +14,436 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cashflow_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string
+          id: string
+          order_id: string | null
+          transaction_date: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          order_id?: string | null
+          transaction_date?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          order_id?: string | null
+          transaction_date?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashflow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_items: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          desired_margin_percent: number
+          execution_minutes: number
+          fixed_cost_allocation: number
+          id: string
+          is_promo_sale_active: boolean
+          item_type: string
+          labor_cost: number
+          main_benefit: string | null
+          materials_cost: number
+          name: string
+          pain_point_solved: string | null
+          platform_tax_percent: number
+          promo_sale_price: number | null
+          suggested_price: number
+          target_audience: string | null
+          total_unit_cost: number
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          desired_margin_percent?: number
+          execution_minutes?: number
+          fixed_cost_allocation?: number
+          id?: string
+          is_promo_sale_active?: boolean
+          item_type: string
+          labor_cost?: number
+          main_benefit?: string | null
+          materials_cost?: number
+          name: string
+          pain_point_solved?: string | null
+          platform_tax_percent?: number
+          promo_sale_price?: number | null
+          suggested_price: number
+          target_audience?: string | null
+          total_unit_cost: number
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          desired_margin_percent?: number
+          execution_minutes?: number
+          fixed_cost_allocation?: number
+          id?: string
+          is_promo_sale_active?: boolean
+          item_type?: string
+          labor_cost?: number
+          main_benefit?: string | null
+          materials_cost?: number
+          name?: string
+          pain_point_solved?: string | null
+          platform_tax_percent?: number
+          promo_sale_price?: number | null
+          suggested_price?: number
+          target_audience?: string | null
+          total_unit_cost?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_recipes: {
+        Row: {
+          catalog_item_id: string
+          id: string
+          inventory_item_id: string
+          quantity_used: number
+        }
+        Insert: {
+          catalog_item_id: string
+          id?: string
+          inventory_item_id: string
+          quantity_used: number
+        }
+        Update: {
+          catalog_item_id?: string
+          id?: string
+          inventory_item_id?: string
+          quantity_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_recipes_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_recipes_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string
+          current_stock: number
+          id: string
+          is_promo_active: boolean
+          min_stock_alert: number
+          name: string
+          package_quantity: number
+          promo_price: number | null
+          regular_price: number
+          supplier_name: string | null
+          unit_cost_active: number | null
+          unit_cost_regular: number | null
+          unit_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          current_stock?: number
+          id?: string
+          is_promo_active?: boolean
+          min_stock_alert?: number
+          name: string
+          package_quantity: number
+          promo_price?: number | null
+          regular_price: number
+          supplier_name?: string | null
+          unit_cost_active?: number | null
+          unit_cost_regular?: number | null
+          unit_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          current_stock?: number
+          id?: string
+          is_promo_active?: boolean
+          min_stock_alert?: number
+          name?: string
+          package_quantity?: number
+          promo_price?: number | null
+          regular_price?: number
+          supplier_name?: string | null
+          unit_cost_active?: number | null
+          unit_cost_regular?: number | null
+          unit_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_states: {
+        Row: {
+          expires_at: string
+          state: string
+          user_id: string
+          verifier: string
+        }
+        Insert: {
+          expires_at: string
+          state: string
+          user_id: string
+          verifier: string
+        }
+        Update: {
+          expires_at?: string
+          state?: string
+          user_id?: string
+          verifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_states_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          catalog_item_id: string
+          checkout_url: string | null
+          created_at: string
+          customer_name: string
+          customer_whatsapp: string | null
+          id: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          paid_at: string | null
+          payment_method: string
+          quantity: number
+          status: string
+          stock_deducted: boolean
+          total_amount: number
+          total_cost_snapshot: number
+          unit_price_charged: number
+          user_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          checkout_url?: string | null
+          created_at?: string
+          customer_name: string
+          customer_whatsapp?: string | null
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          paid_at?: string | null
+          payment_method: string
+          quantity?: number
+          status?: string
+          stock_deducted?: boolean
+          total_amount: number
+          total_cost_snapshot: number
+          unit_price_charged: number
+          user_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          checkout_url?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_whatsapp?: string | null
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          quantity?: number
+          status?: string
+          stock_deducted?: boolean
+          total_amount?: number
+          total_cost_snapshot?: number
+          unit_price_charged?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_connections: {
+        Row: {
+          access_token: string
+          expires_at: string | null
+          mp_user_id: string | null
+          public_key: string | null
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          expires_at?: string | null
+          mp_user_id?: string | null
+          public_key?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string | null
+          mp_user_id?: string | null
+          public_key?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          business_name: string | null
+          business_type: string
+          created_at: string
+          hourly_rate: number
+          id: string
+          monthly_fixed_costs: number
+          monthly_income_goal: number
+          monthly_work_hours: number
+          mp_connected: boolean
+        }
+        Insert: {
+          business_name?: string | null
+          business_type?: string
+          created_at?: string
+          hourly_rate?: number
+          id: string
+          monthly_fixed_costs?: number
+          monthly_income_goal?: number
+          monthly_work_hours?: number
+          mp_connected?: boolean
+        }
+        Update: {
+          business_name?: string | null
+          business_type?: string
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          monthly_fixed_costs?: number
+          monthly_income_goal?: number
+          monthly_work_hours?: number
+          mp_connected?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_sale: {
+        Args: {
+          p_customer: string
+          p_item: string
+          p_method: string
+          p_promo: boolean
+          p_quantity: number
+          p_whatsapp: string
+        }
+        Returns: string
+      }
+      process_paid_order: { Args: { p_order_id: string }; Returns: undefined }
+      restock_item: {
+        Args: {
+          p_expense: boolean
+          p_id: string
+          p_promo: boolean
+          p_quantity: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

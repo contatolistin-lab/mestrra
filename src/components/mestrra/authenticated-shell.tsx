@@ -1,20 +1,10 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/lib/use-business";
 import { Shell } from "@/components/mestrra/shell";
 import { Onboarding } from "@/components/mestrra/onboarding";
 
-export const Route = createFileRoute("/_authenticated")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-  },
-  component: AuthenticatedLayout,
-});
-
-function AuthenticatedLayout() {
+export function AuthenticatedShell({ children }: { children: ReactNode }) {
   const { data, isPending, isError, refetch } = useBusiness();
 
   if (isPending) {
@@ -46,9 +36,7 @@ function AuthenticatedLayout() {
 
   return (
     <>
-      <Shell data={data}>
-        <Outlet />
-      </Shell>
+      <Shell data={data}>{children}</Shell>
       <Onboarding data={data} />
     </>
   );

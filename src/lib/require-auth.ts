@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/resolved-client";
 
 export async function requireAuth() {
   const { data, error } = await supabase.auth.getUser();

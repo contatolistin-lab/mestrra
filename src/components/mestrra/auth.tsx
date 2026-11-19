@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Check, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/resolved-client";
 import { toast } from "sonner";
 import { Brand } from "./brand";
 export type AuthMode = "login" | "signup" | "forgot";

@@ -9,7 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/resolved-client";
 import { toast } from "sonner";
 import type { BusinessData } from "@/lib/business.functions";
 import { ProfileForm } from "./forms";

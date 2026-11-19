@@ -5,7 +5,7 @@ import { demoBusiness } from "@/lib/demo";
 import { routeMeta } from "@/lib/mestrra";
 import { Shell } from "@/components/mestrra/shell";
 import { Dashboard } from "@/components/mestrra/dashboard";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/resolved-client";
 
 // The home route ships no og:image, so serve-time hosting can inject the
 // project's social preview (explicit og:image or latest screenshot).

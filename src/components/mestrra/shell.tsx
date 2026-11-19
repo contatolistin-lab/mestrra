@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
+import { isDemoMode } from "@/lib/demo-mode";
 import { Brand } from "./brand";
 const navigation = [
   { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
@@ -103,7 +104,9 @@ export function Shell({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold truncate">{name}</p>
-          <p className="text-[10px] text-brand-foreground/45 mt-1">Seu espaço de trabalho</p>
+          <p className="text-[10px] text-brand-foreground/45 mt-1">
+            {isDemoMode ? "Modo demo · dados de exemplo" : "Seu espaço de trabalho"}
+          </p>
         </div>
         <ChevronsUpDown size={14} className="text-brand-foreground/45" />
       </div>

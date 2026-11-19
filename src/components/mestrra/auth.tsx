@@ -5,9 +5,17 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brand } from "./brand";
-export function Auth({ recovery = false }: { recovery?: boolean }) {
+export type AuthMode = "login" | "signup" | "forgot";
+
+export function Auth({
+  recovery = false,
+  initialMode = "login",
+}: {
+  recovery?: boolean;
+  initialMode?: AuthMode;
+}) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [validRecovery, setValidRecovery] = useState(false);

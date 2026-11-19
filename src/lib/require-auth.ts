@@ -3,5 +3,5 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function requireAuth() {
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw redirect({ to: "/auth" });
+  if (error || !data.user) throw redirect({ to: "/auth", search: { mode: "login" } });
 }

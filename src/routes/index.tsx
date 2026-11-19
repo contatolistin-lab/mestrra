@@ -29,7 +29,10 @@ function Index() {
   }, [navigate]);
   return (
     <Shell data={data} demo>
-      <Dashboard data={data} onExpense={() => void navigate({ to: "/auth" })} />
+      <Dashboard
+        data={data}
+        onExpense={() => void navigate({ to: "/auth", search: { mode: "signup" } })}
+      />
     </Shell>
   );
 }

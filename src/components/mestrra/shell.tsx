@@ -90,7 +90,7 @@ export function Shell({
     await client.cancelQueries();
     client.clear();
     await supabase.auth.signOut();
-    await navigate({ to: "/auth", replace: true });
+    await navigate({ to: "/auth", search: { mode: "login" }, replace: true });
   }
   const nav = (
     <>
@@ -158,7 +158,9 @@ export function Shell({
             variant="ghost"
             size="icon"
             title={demo ? "Entrar na minha conta" : "Sair da conta"}
-            onClick={() => (demo ? void navigate({ to: "/auth" }) : void logout())}
+            onClick={() =>
+              demo ? void navigate({ to: "/auth", search: { mode: "login" } }) : void logout()
+            }
           >
             <LogOut size={16} />
           </Button>
@@ -205,7 +207,9 @@ export function Shell({
             </span>
             {demo && (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/auth">Entrar</Link>
+                <Link to="/auth" search={{ mode: "login" }}>
+                  Entrar
+                </Link>
               </Button>
             )}
             <div className="relative">
@@ -283,7 +287,7 @@ export function Shell({
           {demo && (
             <div className="mb-5 flex flex-wrap gap-2 justify-between text-xs text-muted-foreground">
               <span>Prévia com dados de demonstração · Doce Atelier</span>
-              <Link to="/auth" className="text-info font-semibold">
+              <Link to="/auth" search={{ mode: "signup" }} className="text-info font-semibold">
                 Criar meu espaço <ArrowUpRight className="inline" size={12} />
               </Link>
             </div>

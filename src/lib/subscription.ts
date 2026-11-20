@@ -7,5 +7,4 @@ export const SUBSCRIPTION_BENEFITS = [
   "Copiloto de conteúdo para Instagram e WhatsApp",
   "Cobranças com Mercado Pago e baixa automática de estoque",
   "Ficha técnica, simulador de preço e alertas de reposição",
-  "Acesso imediato e atualizações incluídas",
 ] as const;

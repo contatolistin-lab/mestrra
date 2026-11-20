@@ -301,11 +301,11 @@ function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="mt-7">
-      <label htmlFor="checkout-email" className="block text-xs font-semibold text-foreground">
+    <form onSubmit={(event) => void handleSubmit(event)}>
+      <label htmlFor="checkout-email" className="block text-sm font-bold text-foreground">
         E-mail para vincular sua assinatura
       </label>
-      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+      <div className="mt-2 flex flex-col gap-3">
         <input
           id="checkout-email"
           name="email"
@@ -320,7 +320,7 @@ function CheckoutForm() {
         <Button
           type="submit"
           disabled={busy}
-          className="h-12 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.02] hover:bg-primary/90 disabled:hover:scale-100"
+          className="h-12 w-full rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.02] hover:bg-primary/90 disabled:hover:scale-100"
         >
           {busy ? <LoaderCircle className="animate-spin" size={17} /> : <LockKeyhole size={17} />}
           {busy ? "Abrindo checkout..." : "Assinar com Mercado Pago"}
@@ -839,58 +839,74 @@ export function SalesPage() {
               />
             </div>
 
-            <div
-              data-reveal
-              className="sales-reveal relative mx-auto mt-14 max-w-3xl rounded-[34px] bg-gradient-to-br from-primary via-info/60 to-transparent p-px shadow-2xl shadow-info/10"
-            >
-              <div className="rounded-[33px] bg-card p-6 sm:p-9">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold tracking-[0.16em] text-info uppercase">
-                      Plano mensal
-                    </p>
-                    <h3 className="mt-1 text-2xl font-extrabold">Mestrra completa</h3>
-                  </div>
-                  <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-extrabold tracking-wide text-primary uppercase">
-                    Mais escolhido
-                  </span>
-                </div>
-
-                <div className="mt-7 flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <span className="text-5xl font-extrabold tracking-tight sm:text-6xl">
-                    {money(SUBSCRIPTION_PRICE)}
-                  </span>
-                  <span className="pb-2 text-lg font-semibold text-muted-foreground">/mês</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Recorrência mensal via Mercado Pago. Cancele quando quiser.
-                </p>
-
-                <CheckoutForm />
-
-                <div className="mt-8 grid gap-3 border-t pt-7 sm:grid-cols-2">
-                  {SUBSCRIPTION_BENEFITS.map((benefit) => (
-                    <div key={benefit} className="flex items-start gap-2.5 text-sm">
-                      <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-success-soft text-success">
-                        <Check size={11} strokeWidth={3} />
-                      </span>
-                      <span className="text-muted-foreground">{benefit}</span>
+            <div data-reveal className="sales-reveal relative mx-auto mt-14 max-w-6xl">
+              <div className="absolute -inset-1 rounded-[36px] bg-gradient-to-br from-primary/50 via-info/30 to-transparent blur-md" />
+              <div className="relative overflow-hidden rounded-[34px] border bg-card shadow-2xl shadow-info/10">
+                <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="relative overflow-hidden bg-brand p-8 text-white sm:p-10">
+                    <div className="sales-grid-bg pointer-events-none absolute inset-0 opacity-40" />
+                    <div className="relative">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-[0.16em] text-white/80 uppercase">
+                          <span className="size-1.5 rounded-full bg-primary sales-pulse-dot" />
+                          Plano mensal
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-extrabold text-primary-foreground shadow-lg shadow-primary/25">
+                          <Sparkles size={12} /> Mais escolhido
+                        </span>
+                      </div>
+                      <h3 className="mt-10 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                        Mestrra completa
+                      </h3>
+                      <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
+                        A esteira inteira para organizar, decidir, produzir e vender em um só lugar.
+                      </p>
+                      <div className="mt-9 flex items-end gap-2">
+                        <span className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+                          {money(SUBSCRIPTION_PRICE)}
+                        </span>
+                        <span className="pb-2 text-lg font-semibold text-white/50">/mês</span>
+                      </div>
+                      <p className="mt-2 text-sm text-white/60">
+                        Recorrência mensal via Mercado Pago. Cancele quando quiser.
+                      </p>
+                      <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/10 pt-6">
+                        {[
+                          { icon: Clock3, label: "Acesso imediato" },
+                          { icon: RefreshCcw, label: "Sem fidelidade" },
+                          { icon: ShieldCheck, label: "Checkout seguro" },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex items-center gap-2 text-[11px] font-semibold text-white/70"
+                          >
+                            <item.icon size={14} className="shrink-0 text-primary" />
+                            {item.label}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                  <div className="p-8 sm:p-10">
+                    <CheckoutForm />
+                    <div className="mt-9 border-t pt-7">
+                      <p className="text-xs font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
+                        Incluído no seu plano
+                      </p>
+                      <div className="mt-5 grid gap-3.5">
+                        {SUBSCRIPTION_BENEFITS.map((benefit) => (
+                          <div key={benefit} className="flex items-start gap-3 text-sm">
+                            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-success-soft text-success">
+                              <Check size={12} strokeWidth={3} />
+                            </span>
+                            <span className="leading-relaxed text-foreground/80">{benefit}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-success" /> Checkout oficial Mercado Pago
-              </span>
-              <span className="flex items-center gap-2">
-                <RefreshCcw size={15} className="text-info" /> Recorrência mensal
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock3 size={15} className="text-primary" /> Acesso imediato
-              </span>
             </div>
           </div>
         </section>

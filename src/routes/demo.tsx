@@ -31,6 +31,7 @@ function DemoPage() {
       <Dashboard
         data={data}
         onExpense={() => void navigate({ to: "/auth", search: { mode: "signup" } })}
+        onLogout={() => void navigate({ to: "/" })}
       />
     </Shell>
   );

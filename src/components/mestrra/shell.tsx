@@ -91,7 +91,7 @@ export function Shell({
     await client.cancelQueries();
     client.clear();
     await supabase.auth.signOut();
-    await navigate({ to: "/auth", search: { mode: "login" }, replace: true });
+    await navigate({ to: "/", replace: true });
   }
   const nav = (
     <>

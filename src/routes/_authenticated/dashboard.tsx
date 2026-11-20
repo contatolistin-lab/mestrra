@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AuthenticatedShell } from "@/components/mestrra/authenticated-shell";
 import { Dashboard } from "@/components/mestrra/dashboard";
 import { CashBook } from "@/components/mestrra/cashbook";
@@ -7,6 +8,7 @@ import { FormDialog, ExpenseForm } from "@/components/mestrra/forms";
 import { useBusinessData } from "@/lib/use-business";
 import { requireAuth } from "@/lib/require-auth";
 import { routeMeta } from "@/lib/mestrra";
+import { supabase } from "@/integrations/supabase/resolved-client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   ssr: false,
@@ -22,11 +24,24 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardPage() {
   const data = useBusinessData();
+  const navigate = useNavigate();
+  const client = useQueryClient();
   const [expenseOpen, setExpenseOpen] = useState(false);
+
+  async function logout() {
+    await client.cancelQueries();
+    client.clear();
+    await supabase.auth.signOut();
+    await navigate({ to: "/", replace: true });
+  }
 
   return (
     <>
-      <Dashboard data={data} onExpense={() => setExpenseOpen(true)} />
+      <Dashboard
+        data={data}
+        onExpense={() => setExpenseOpen(true)}
+        onLogout={() => void logout()}
+      />
       <CashBook data={data} />
       <FormDialog
         title="Lançar despesa"

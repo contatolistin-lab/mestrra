@@ -17,11 +17,20 @@ import {
   ChevronRight,
   Receipt,
   CircleDollarSign,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BusinessData } from "@/lib/business.functions";
 import { money, shortDate } from "@/lib/mestrra";
-export function Dashboard({ data, onExpense }: { data: BusinessData; onExpense: () => void }) {
+export function Dashboard({
+  data,
+  onExpense,
+  onLogout,
+}: {
+  data: BusinessData;
+  onExpense: () => void;
+  onLogout: () => void;
+}) {
   const [period, setPeriod] = useState("month");
   const [chartMode, setChartMode] = useState("week");
   const today = useMemo(() => new Date(), []);
@@ -92,6 +101,10 @@ export function Dashboard({ data, onExpense }: { data: BusinessData; onExpense: 
               <option value="all">Todo o período</option>
             </select>
           </label>
+          <Button onClick={onLogout} variant="outline" size="sm">
+            <LogOut size={14} />
+            Sair
+          </Button>
           <Button onClick={onExpense} variant="outline" size="sm">
             <Plus size={14} />
             Lançar despesa

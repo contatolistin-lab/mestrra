@@ -1002,10 +1002,13 @@ export function SalesPage() {
               />
             </div>
             <div className="space-y-3" data-reveal>
-              {faqs.map((faq) => (
+              {faqs.map((faq, index) => (
                 <details
                   key={faq.question}
+                  data-reveal
+                  open={index === 0}
                   className="sales-reveal group rounded-2xl border bg-card p-5 shadow-sm"
+                  style={{ transitionDelay: `${index * 60}ms` }}
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold">
                     {faq.question}

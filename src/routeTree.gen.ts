@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssinarRouteImport } from './routes/assinar'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as MpCallbackRouteImport } from './routes/mp-callback'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
@@ -34,6 +35,11 @@ const AssinarRoute = AssinarRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MpCallbackRoute = MpCallbackRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assinar'
     | '/auth'
+    | '/demo'
     | '/mp-callback'
     | '/reset-password'
     | '/configuracoes'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assinar'
     | '/auth'
+    | '/demo'
     | '/mp-callback'
     | '/reset-password'
     | '/configuracoes'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assinar'
     | '/auth'
+    | '/demo'
     | '/mp-callback'
     | '/reset-password'
     | '/_authenticated/configuracoes'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssinarRoute: typeof AssinarRoute
   AuthRoute: typeof AuthRoute
+  DemoRoute: typeof DemoRoute
   MpCallbackRoute: typeof MpCallbackRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mp-callback': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssinarRoute: AssinarRoute,
   AuthRoute: AuthRoute,
+  DemoRoute: DemoRoute,
   MpCallbackRoute: MpCallbackRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,

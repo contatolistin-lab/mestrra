@@ -22,4 +22,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches the demo page for /demo", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/demo");
+
+    expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
+  });
 });

@@ -103,6 +103,66 @@ const steps: { number: string; icon: LucideIcon; title: string; description: str
   },
 ];
 
+const problems: { icon: LucideIcon; title: string; description: string }[] = [
+  {
+    icon: BarChart3,
+    title: "Preço no achismo",
+    description: "Você calcula rápido, mas nunca tem certeza se a margem realmente fechou.",
+  },
+  {
+    icon: Package,
+    title: "Estoque na cabeça",
+    description: "O que vendeu, o que falta e o que parou de movimentar ficam espalhados.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Conteúdo travado",
+    description: "Você sabe que precisa postar, mas a inspiração nunca chega na hora.",
+  },
+  {
+    icon: Wallet,
+    title: "Caixa no escuro",
+    description: "Dinheiro entrou, mas você não sabe ao certo de onde veio ou para onde foi.",
+  },
+];
+
+const audiences: { icon: LucideIcon; title: string; description: string }[] = [
+  {
+    icon: Sparkles,
+    title: "Produtores e artesãos",
+    description: "Do insumo ao pedido, com preço justo e estoque sob controle.",
+  },
+  {
+    icon: Bot,
+    title: "Estúdios e serviços",
+    description: "Precificação de horas, cobrança e conteúdo sem perder a virada do dia.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Marcas em crescimento",
+    description: "Números, vendas e caixa conectados para decidir com mais confiança.",
+  },
+];
+
+const beforeAfter = [
+  {
+    before: "Planilha de preço que ninguém atualiza",
+    after: "Simulador com custo, taxa e margem em segundos",
+  },
+  {
+    before: "Estoque conferido na mão",
+    after: "Baixa automática a cada venda realizada",
+  },
+  {
+    before: "Cobrança e caixa em lugares diferentes",
+    after: "Mercado Pago e caixa atualizados juntos",
+  },
+  {
+    before: "Post adiado porque não sabia o que escrever",
+    after: "Copiloto sugere conteúdo para Instagram e WhatsApp",
+  },
+];
+
 const testimonials = [
   {
     quote:
@@ -148,15 +208,20 @@ const faqs = [
     answer:
       "Toda a esteira da Mestrra: estoque, precificação, copiloto de marketing, vendas, cobranças e caixa, com atualizações incluídas.",
   },
+  {
+    question: "Posso conhecer antes de assinar?",
+    answer:
+      "Pode. Abra a demonstração com dados de exemplo e veja estoque, precificação, conteúdo, cobranças e caixa funcionando antes de escolher o plano.",
+  },
 ];
 
 const marqueeItems = [
-  "Estoque inteligente",
-  "Precificação com margem",
-  "Copiloto de conteúdo",
+  "5 etapas conectadas",
+  "1 plano único",
+  "R$ 127 por mês",
   "Checkout Mercado Pago",
-  "Caixa 360º",
-  "Alertas de reposição",
+  "Cancele quando quiser",
+  "Acesso imediato",
 ];
 
 function useReveal() {
@@ -288,27 +353,37 @@ export function SalesPage() {
           <a href="#inicio" aria-label="Mestrra, voltar ao início" className="text-white">
             <Brand />
           </a>
-          <nav className="hidden items-center gap-8 text-sm text-white/70 md:flex">
+          <nav className="hidden items-center gap-7 text-sm text-white/70 lg:flex">
+            <a href="#problema" className="transition hover:text-white">
+              O problema
+            </a>
             <a href="#recursos" className="transition hover:text-white">
               Recursos
             </a>
             <a href="#como-funciona" className="transition hover:text-white">
               Como funciona
             </a>
-            <a href="#depoimentos" className="transition hover:text-white">
-              Depoimentos
+            <a href="#precos" className="transition hover:text-white">
+              Preços
             </a>
             <a href="#faq" className="transition hover:text-white">
               FAQ
             </a>
           </nav>
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             <Link
               to="/auth"
               search={{ mode: "login" }}
-              className="text-sm font-medium text-white/70 transition hover:text-white"
+              className="rounded-full px-3 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               Entrar
+            </Link>
+            <Link
+              to="/auth"
+              search={{ mode: "signup" }}
+              className="rounded-full border border-white/25 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+            >
+              Cadastro
             </Link>
             <a
               href="#precos"
@@ -330,8 +405,10 @@ export function SalesPage() {
         {menuOpen && (
           <nav className="flex flex-col gap-1 border-t border-white/10 bg-brand px-5 py-4 text-sm text-white/80 md:hidden">
             {[
+              ["O problema", "#problema"],
               ["Recursos", "#recursos"],
               ["Como funciona", "#como-funciona"],
+              ["Preços", "#precos"],
               ["Depoimentos", "#depoimentos"],
               ["FAQ", "#faq"],
             ].map(([label, href]) => (
@@ -344,6 +421,24 @@ export function SalesPage() {
                 {label}
               </a>
             ))}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Link
+                to="/auth"
+                search={{ mode: "login" }}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg border border-white/20 px-3 py-2 text-center text-xs font-bold"
+              >
+                Entrar
+              </Link>
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg bg-white/10 px-3 py-2 text-center text-xs font-bold"
+              >
+                Cadastro
+              </Link>
+            </div>
             <a
               href="#precos"
               onClick={() => setMenuOpen(false)}
@@ -368,7 +463,7 @@ export function SalesPage() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase backdrop-blur">
-                <Sparkles size={13} className="text-primary" />A esteira completa do seu negócio
+                <Sparkles size={13} className="text-primary" /> A esteira completa do seu negócio
               </span>
               <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
                 Seu negócio em
@@ -388,7 +483,7 @@ export function SalesPage() {
                   Quero começar por {money(SUBSCRIPTION_PRICE)}/mês <ArrowRight size={17} />
                 </a>
                 <Link
-                  to="/"
+                  to="/demo"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
                 >
                   Ver demonstração <ArrowUpRight size={16} />
@@ -506,6 +601,50 @@ export function SalesPage() {
           </div>
         </section>
 
+        <section id="problema" className="scroll-mt-20 bg-background py-24 sm:py-28">
+          <div className="mx-auto max-w-7xl px-5 sm:px-8">
+            <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+              <div data-reveal className="sales-reveal">
+                <SectionHeading
+                  eyebrow="O problema"
+                  title={
+                    <>
+                      Você não está desorganizado<span className="text-info">.</span> Você está
+                      desconectado.
+                    </>
+                  }
+                  description="O preço está na planilha, o estoque na memória, a cobrança no aplicativo e o caixa em outro lugar. O problema não é esforço: é falta de conexão."
+                  align="left"
+                />
+                <a
+                  href="#como-funciona"
+                  className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-info transition hover:gap-3"
+                >
+                  Veja como a esteira funciona <ArrowRight size={16} />
+                </a>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {problems.map((problem, index) => (
+                  <div
+                    key={problem.title}
+                    data-reveal
+                    className="sales-reveal sales-card-hover rounded-2xl border bg-card p-5 shadow-sm"
+                    style={{ transitionDelay: `${index * 70}ms` }}
+                  >
+                    <div className="grid size-10 place-items-center rounded-xl bg-destructive/10 text-destructive">
+                      <problem.icon size={18} />
+                    </div>
+                    <h3 className="mt-4 text-sm font-extrabold">{problem.title}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                      {problem.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section
           id="recursos"
           className="mx-auto max-w-7xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28"
@@ -544,6 +683,41 @@ export function SalesPage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section id="para-quem" className="scroll-mt-20 bg-secondary/40 py-24 sm:py-28">
+          <div className="mx-auto max-w-7xl px-5 sm:px-8">
+            <div data-reveal className="sales-reveal">
+              <SectionHeading
+                eyebrow="Feita para o seu tipo de negócio"
+                title={
+                  <>
+                    Se o seu dia tem produção, preço e venda,{" "}
+                    <span className="text-info">esta página é sua.</span>
+                  </>
+                }
+                description="Você não precisa mudar o jeito que trabalha. A Mestrra entra na rotina para dar clareza ao que já existe."
+              />
+            </div>
+            <div className="mt-14 grid gap-4 md:grid-cols-3">
+              {audiences.map((audience, index) => (
+                <div
+                  key={audience.title}
+                  data-reveal
+                  className="sales-reveal sales-card-hover rounded-3xl border bg-card p-6 shadow-sm"
+                  style={{ transitionDelay: `${index * 90}ms` }}
+                >
+                  <div className="grid size-11 place-items-center rounded-2xl bg-info-soft text-info">
+                    <audience.icon size={20} />
+                  </div>
+                  <h3 className="mt-5 text-lg font-extrabold">{audience.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {audience.description}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -595,6 +769,58 @@ export function SalesPage() {
                   {item}
                 </span>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="antes-depois" className="scroll-mt-20 bg-background py-24 sm:py-28">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <div data-reveal className="sales-reveal">
+              <SectionHeading
+                eyebrow="Antes e depois"
+                title={
+                  <>
+                    A mesma rotina. <span className="text-info">Outro ritmo.</span>
+                  </>
+                }
+                description="Veja o que muda quando estoque, preço, conteúdo, cobrança e caixa deixam de trabalhar separados."
+              />
+            </div>
+            <div className="mt-14 grid gap-4 md:grid-cols-2">
+              <div className="rounded-3xl border bg-card p-7 shadow-sm">
+                <p className="flex items-center gap-2 text-xs font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
+                  <X size={15} className="text-destructive" /> Antes
+                </p>
+                <div className="mt-6 space-y-4">
+                  {beforeAfter.map((row) => (
+                    <p
+                      key={row.before}
+                      className="flex items-start gap-3 text-sm text-muted-foreground"
+                    >
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-destructive" />
+                      {row.before}
+                    </p>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-3xl border border-success/30 bg-success-soft/40 p-7 shadow-sm">
+                <p className="flex items-center gap-2 text-xs font-extrabold tracking-[0.16em] text-success uppercase">
+                  <Check size={15} /> Com Mestrra
+                </p>
+                <div className="mt-6 space-y-4">
+                  {beforeAfter.map((row) => (
+                    <p
+                      key={row.after}
+                      className="flex items-start gap-3 text-sm font-medium text-foreground"
+                    >
+                      <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
+                        <Check size={11} strokeWidth={3} />
+                      </span>
+                      {row.after}
+                    </p>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -711,6 +937,36 @@ export function SalesPage() {
                   </figcaption>
                 </figure>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-card/60 py-16 sm:py-20">
+          <div className="mx-auto max-w-5xl px-5 sm:px-8">
+            <div
+              data-reveal
+              className="sales-reveal flex flex-col items-start gap-6 rounded-[28px] border bg-background p-8 shadow-sm sm:flex-row sm:items-center sm:p-10"
+            >
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-success-soft text-success">
+                <ShieldCheck size={26} />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                  Sem contrato. Sem fidelidade. Sem letra miúda.
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  A assinatura é mensal e o pagamento é processado pelo Mercado Pago. Você gerencia
+                  ou cancela quando quiser, direto no checkout, sem precisar falar com ninguém.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] font-bold text-muted-foreground">
+                <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
+                  <LockKeyhole size={13} className="text-info" /> Pagamento seguro
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
+                  <RefreshCcw size={13} className="text-info" /> Recorrência mensal
+                </span>
+              </div>
             </div>
           </div>
         </section>

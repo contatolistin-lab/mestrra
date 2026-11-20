@@ -220,7 +220,7 @@ export function Auth({
           </p>
         )}
         <Button variant="ghost" className="mt-5 text-xs" asChild>
-          <Link to="/">
+          <Link to="/demo">
             Conhecer a Mestrra com dados de exemplo <ArrowRight size={14} />
           </Link>
         </Button>

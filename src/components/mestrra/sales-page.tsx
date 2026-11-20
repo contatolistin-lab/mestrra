@@ -732,7 +732,7 @@ export function SalesPage() {
                 eyebrow="Como funciona"
                 title={
                   <>
-                    Do caos ao clique<span className="text-primary">.</span>
+                    <span className="text-primary">Do caos ao clique.</span>
                   </>
                 }
                 description="Três passos para transformar a forma como você Decide, produz e vende."

@@ -303,7 +303,7 @@ function CheckoutForm() {
   return (
     <form onSubmit={(event) => void handleSubmit(event)}>
       <label htmlFor="checkout-email" className="block text-sm font-bold text-foreground">
-        E-mail para vincular sua assinatura
+        Informe seu e-mail para começar
       </label>
       <div className="mt-2 flex flex-col gap-3">
         <input
@@ -314,7 +314,7 @@ function CheckoutForm() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="voce@seuemail.com"
+          placeholder="seu@email.com"
           className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-background px-4 text-sm text-foreground outline-none transition focus:border-info focus:ring-2 focus:ring-info/20"
         />
         <Button
@@ -322,8 +322,8 @@ function CheckoutForm() {
           disabled={busy}
           className="h-12 w-full rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.02] hover:bg-primary/90 disabled:hover:scale-100"
         >
-          {busy ? <LoaderCircle className="animate-spin" size={17} /> : <LockKeyhole size={17} />}
-          {busy ? "Abrindo checkout..." : "Assinar com Mercado Pago"}
+          {busy ? <LoaderCircle className="animate-spin" size={17} /> : <ArrowRight size={17} />}
+          {busy ? "Abrindo checkout..." : "Quero começar agora"}
         </Button>
       </div>
       {error && (
@@ -336,7 +336,7 @@ function CheckoutForm() {
       )}
       <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground">
         <ShieldCheck size={14} className="mt-0.5 shrink-0 text-success" />
-        Pagamento seguro no Mercado Pago. Seus dados de cartão não passam por este site.
+        Pagamento seguro. Seus dados de cartão não passam por este site.
       </p>
     </form>
   );

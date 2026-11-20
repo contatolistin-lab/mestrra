@@ -72,7 +72,7 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
               <CreditCard className="text-info" size={22} />
             </div>
             <p className="mt-4 text-[11px] leading-relaxed text-brand-foreground/70">
-              O dinheiro das vendas cai direto na sua conta Mercado Pago. A Mestrra apenas
+              O dinheiro das vendas cai direto na sua conta Mercado Pago. A mestrra apenas
               automatiza a cobrança, a baixa de estoque e o lançamento no caixa.
             </p>
             <div className="mt-5 flex items-center gap-2 text-[11px]">

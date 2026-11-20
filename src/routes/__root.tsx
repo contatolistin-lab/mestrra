@@ -83,10 +83,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Mestrra · Seu negócio em movimento" },
+      { title: "mestrra · Seu negócio em movimento" },
       { name: "description", content: "Gestão, precificação e vendas para o seu negócio." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Mestrra · Seu negócio em movimento" },
+      { property: "og:title", content: "mestrra · Seu negócio em movimento" },
       {
         property: "og:description",
         content: "Estoque, precificação, marketing, vendas e caixa conectados.",

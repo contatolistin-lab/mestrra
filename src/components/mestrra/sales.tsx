@@ -444,7 +444,7 @@ export function Sales({
                 <Button variant="outline" asChild>
                   <a
                     href={whatsappLink(
-                      `Olá${checkout.customer ? `, ${checkout.customer}` : ""}! Segue o link para finalizar sua compra na Mestrra: ${checkout.url}`,
+                      `Olá${checkout.customer ? `, ${checkout.customer}` : ""}! Segue o link para finalizar sua compra na mestrra: ${checkout.url}`,
                       checkout.phone,
                     )}
                     target="_blank"

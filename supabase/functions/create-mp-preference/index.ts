@@ -80,8 +80,8 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         items: [
           {
-            title: item?.name || "Produto ou serviço Mestrra",
-            description: `Pedido Mestrra ${order.id}`,
+            title: item?.name || "Produto ou serviço mestrra",
+            description: `Pedido mestrra ${order.id}`,
             quantity: order.quantity,
             currency_id: "BRL",
             unit_price: order.unit_price_charged,

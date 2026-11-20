@@ -4,7 +4,7 @@ import { generateCopy, phoneMask, priceCalculation, pricingError, unitCost } fro
 import { getDemoData, resetDemoData } from "@/lib/demo-store";
 import { requiredStock } from "@/lib/stock";
 
-describe("Mestrra business rules", () => {
+describe("mestrra business rules", () => {
   beforeEach(() => {
     resetDemoData();
   });

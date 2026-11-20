@@ -86,9 +86,9 @@ export function pricingError(input: PricingValidation): string | null {
 }
 export const routeMeta = (title: string, description: string) => ({
   meta: [
-    { title: `${title} · Mestrra` },
+    { title: `${title} · mestrra` },
     { name: "description", content: description },
-    { property: "og:title", content: `${title} · Mestrra` },
+    { property: "og:title", content: `${title} · mestrra` },
     { property: "og:description", content: description },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },

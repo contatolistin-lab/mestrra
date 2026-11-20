@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
   head: () =>
     routeMeta(
       "Gestão e precificação para pequenos negócios",
-      "Seu custo vira preço. Sua venda vira resultado. Conheça a Mestrra: estoque, precificação, conteúdo, cobranças e caixa por R$ 127/mês.",
+      "Seu custo vira preço. Sua venda vira resultado. Conheça a mestrra: estoque, precificação, conteúdo, cobranças e caixa por R$ 127/mês.",
     ),
   component: Index,
 });

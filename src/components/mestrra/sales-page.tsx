@@ -72,7 +72,7 @@ const features: Feature[] = [
 const faqs = [
   {
     group: "Seu negócio",
-    question: "Vendo serviços, não produtos. A Mestrra também serve para mim?",
+    question: "Vendo serviços, não produtos. A mestrra também serve para mim?",
     answer:
       "Sim. Na precificação, você pode trabalhar com o tempo de execução e o valor da sua hora, além de incluir os materiais usados no atendimento. Depois, use a mesma oferta para criar conteúdo, registrar vendas e acompanhar o caixa. O estoque é útil quando seu serviço consome insumos; não é necessário inventar um produto físico para começar.",
   },
@@ -80,7 +80,7 @@ const faqs = [
     group: "Precificação",
     question: "Como o preço calculado considera minha mão de obra e meu lucro?",
     answer:
-      "A Mestrra soma o custo dos materiais à mão de obra, calculada pelo tempo de execução e pelo valor da hora. Sobre essa base, considera o percentual de despesas fixas informado. O preço sugerido incorpora taxas e margem de lucro como percentuais do preço de venda. Você define esses valores e pode simular cenários antes de salvar; a sugestão não é uma garantia de lucro nem substitui a revisão dos seus custos.",
+      "A mestrra soma o custo dos materiais à mão de obra, calculada pelo tempo de execução e pelo valor da hora. Sobre essa base, considera o percentual de despesas fixas informado. O preço sugerido incorpora taxas e margem de lucro como percentuais do preço de venda. Você define esses valores e pode simular cenários antes de salvar; a sugestão não é uma garantia de lucro nem substitui a revisão dos seus custos.",
   },
   {
     group: "Estoque",
@@ -98,13 +98,13 @@ const faqs = [
     group: "Pagamentos",
     question: "Preciso conectar o Mercado Pago para usar estoque, preços e caixa?",
     answer:
-      "Não. Você pode organizar o estoque, precificar, criar conteúdo e registrar vendas manualmente sem conectar sua conta. A conexão é necessária para gerar cobranças pelo Mercado Pago e acompanhar a confirmação dos pagamentos pela integração. O pagamento da assinatura Mestrra é separado das cobranças que você faz aos seus clientes.",
+      "Não. Você pode organizar o estoque, precificar, criar conteúdo e registrar vendas manualmente sem conectar sua conta. A conexão é necessária para gerar cobranças pelo Mercado Pago e acompanhar a confirmação dos pagamentos pela integração. O pagamento da assinatura mestrra é separado das cobranças que você faz aos seus clientes.",
   },
   {
     group: "Plano mensal",
     question: "Os R$ 127 por mês incluem as taxas das minhas vendas?",
     answer:
-      "A mensalidade inclui o acesso à esteira de estoque, precificação, conteúdo, vendas e caixa da Mestrra. As tarifas de processamento das cobranças aos seus clientes são definidas pelo Mercado Pago e não estão incluídas na assinatura. Confira as condições da sua conta e considere essas taxas ao calcular seus preços.",
+      "A mensalidade inclui o acesso à esteira de estoque, precificação, conteúdo, vendas e caixa da mestrra. As tarifas de processamento das cobranças aos seus clientes são definidas pelo Mercado Pago e não estão incluídas na assinatura. Confira as condições da sua conta e considere essas taxas ao calcular seus preços.",
   },
   {
     group: "Assinatura",
@@ -116,7 +116,7 @@ const faqs = [
     group: "Antes de assinar",
     question: "Consigo testar a rotina completa sem cadastrar meu negócio?",
     answer:
-      "Sim. A demonstração abre um negócio com dados de exemplo para você explorar o estoque, a precificação, o copiloto e as vendas. Ela não cobra sua assinatura nem representa vendas ou pagamentos reais. Quando decidir usar a Mestrra no seu negócio, crie sua própria conta e cadastre suas informações.",
+      "Sim. A demonstração abre um negócio com dados de exemplo para você explorar o estoque, a precificação, o copiloto e as vendas. Ela não cobra sua assinatura nem representa vendas ou pagamentos reais. Quando decidir usar a mestrra no seu negócio, crie sua própria conta e cadastre suas informações.",
   },
 ];
 const routines = [
@@ -174,7 +174,7 @@ function CheckoutForm() {
       />
       <Button type="submit" disabled={busy} className="mt-3 h-12 w-full text-sm font-bold">
         {busy ? <LoaderCircle size={17} className="animate-spin" /> : <ArrowRight size={17} />}
-        {busy ? "Abrindo pagamento…" : "Assinar Mestrra"}
+        {busy ? "Abrindo pagamento…" : "Assinar mestrra"}
       </Button>
       {error && (
         <p role="alert" className="mt-3 text-sm text-destructive">
@@ -195,7 +195,7 @@ export function SalesPage() {
     <div className="sales-page min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-lg">
         <div className="sales-container flex h-[72px] items-center justify-between gap-4">
-          <a href="#inicio" aria-label="Mestrra, início">
+          <a href="#inicio" aria-label="mestrra, início">
             <Brand />
           </a>
           <nav
@@ -268,7 +268,7 @@ export function SalesPage() {
           <div className="sales-container relative pt-10 text-center sm:pt-12">
             <p className="sales-eyebrow">Para quem faz o negócio acontecer</p>
             <h1 className="mt-3 text-5xl font-extrabold sm:text-6xl">
-              Mestrra<span className="text-primary">.</span>
+              mestrra<span className="text-primary">.</span>
             </h1>
             <p className="mx-auto mt-3 max-w-3xl text-2xl leading-tight font-bold sm:text-3xl">
               Seu custo vira preço. Sua venda vira resultado.
@@ -295,11 +295,11 @@ export function SalesPage() {
             <Link
               to="/demo"
               className="sales-product-glimpse mt-8 block"
-              aria-label="Explorar o painel da Mestrra na demonstração"
+              aria-label="Explorar o painel da mestrra na demonstração"
             >
               <img
                 src={workspace.url}
-                alt="Painel real da demonstração Mestrra com faturamento, custos, lucro e movimento do caixa do Doce Atelier."
+                alt="Painel real da demonstração mestrra com faturamento, custos, lucro e movimento do caixa do Doce Atelier."
                 width={1280}
                 height={950}
                 className="w-full"
@@ -337,7 +337,7 @@ export function SalesPage() {
                 </h2>
               </div>
               <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
-                O insumo está numa anotação. O preço, numa planilha. A venda, na conversa. A Mestrra
+                O insumo está numa anotação. O preço, numa planilha. A venda, na conversa. A mestrra
                 reúne essas informações para que uma etapa alimente a próxima.
               </p>
             </div>
@@ -405,7 +405,7 @@ export function SalesPage() {
             </div>
             <div className="mt-12 flex items-center justify-between gap-4 border-t pt-6">
               <p className="text-xs text-muted-foreground">
-                Painel Mestrra · Negócio de demonstração, com dados de exemplo
+                Painel mestrra · Negócio de demonstração, com dados de exemplo
               </p>
               <Button variant="link" asChild className="shrink-0 px-0 text-info">
                 <Link to="/demo">
@@ -415,12 +415,12 @@ export function SalesPage() {
             </div>
             <Link
               to="/demo"
-              aria-label="Abrir demonstração do painel Mestrra"
+              aria-label="Abrir demonstração do painel mestrra"
               className="mt-5 block overflow-hidden rounded-xl border"
             >
               <img
                 src={workspace.url}
-                alt="Demonstração do painel Mestrra: faturamento, despesas, lucro líquido, gráfico de caixa e últimas vendas."
+                alt="Demonstração do painel mestrra: faturamento, despesas, lucro líquido, gráfico de caixa e últimas vendas."
                 width={1280}
                 height={950}
                 loading="lazy"
@@ -488,7 +488,7 @@ export function SalesPage() {
                   <p className="text-xs font-semibold text-brand-foreground/70">
                     ASSINATURA MENSAL
                   </p>
-                  <h3 className="mt-2 text-2xl font-bold">Mestrra completa</h3>
+                  <h3 className="mt-2 text-2xl font-bold">mestrra completa</h3>
                 </div>
                 <div className="p-7 sm:p-8">
                   <div className="flex flex-wrap items-baseline gap-2">
@@ -509,7 +509,7 @@ export function SalesPage() {
                     </p>
                     <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                       As tarifas do Mercado Pago sobre cobranças aos seus clientes são separadas da
-                      mensalidade Mestrra.
+                      mensalidade mestrra.
                     </p>
                   </div>
                 </div>
@@ -517,7 +517,7 @@ export function SalesPage() {
             </div>
             <div className="mt-10 flex flex-col justify-between gap-4 border-t border-info/20 pt-6 sm:flex-row sm:items-center">
               <p className="text-sm text-muted-foreground">
-                Quer ver a Mestrra por dentro antes de assinar?
+                Quer ver a mestrra por dentro antes de assinar?
               </p>
               <Button asChild variant="outline">
                 <Link to="/demo">
@@ -579,7 +579,7 @@ export function SalesPage() {
                 Os números também precisam ser.
               </h2>
               <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-foreground/70">
-                Conheça a Mestrra e encontre uma forma mais conectada de organizar, precificar e
+                Conheça a mestrra e encontre uma forma mais conectada de organizar, precificar e
                 acompanhar suas vendas.
               </p>
             </div>

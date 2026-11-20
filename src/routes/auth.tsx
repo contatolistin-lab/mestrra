@@ -9,7 +9,7 @@ export const Route = createFileRoute("/auth")({
   head: () =>
     routeMeta(
       "Entre no seu negócio",
-      "Acesse ou crie sua conta na Mestrra para conectar estoque, preços, vendas e caixa.",
+      "Acesse ou crie sua conta na mestrra para conectar estoque, preços, vendas e caixa.",
     ),
   component: AuthPage,
 });

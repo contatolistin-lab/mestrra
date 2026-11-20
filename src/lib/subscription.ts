@@ -1,6 +1,6 @@
 export const SUBSCRIPTION_PRICE = 127;
 
-export const SUBSCRIPTION_REASON = "Assinatura Mestrra · Plano Mensal";
+export const SUBSCRIPTION_REASON = "Assinatura mestrra · Plano Mensal";
 
 export const SUBSCRIPTION_BENEFITS = [
   "Esteira completa de estoque, precificação, marketing, vendas e caixa",

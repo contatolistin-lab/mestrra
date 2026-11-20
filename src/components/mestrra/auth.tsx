@@ -104,7 +104,7 @@ export function Auth({
             ))}
           </div>
         </div>
-        <p className="text-[10px] text-brand-foreground/40">Mestrra · Seu negócio em movimento.</p>
+        <p className="text-[10px] text-brand-foreground/40">mestrra · Seu negócio em movimento.</p>
       </section>
       <section className="auth-form">
         <div className="icon-tile mb-6">
@@ -125,7 +125,7 @@ export function Auth({
             : mode === "login"
               ? "Entre e coloque seu negócio em movimento."
               : mode === "signup"
-                ? "Crie sua conta e organize seu negócio na Mestrra."
+                ? "Crie sua conta e organize seu negócio na mestrra."
                 : "Enviaremos um link de recuperação para seu e-mail."}
         </p>
         {sent ? (
@@ -194,7 +194,7 @@ export function Auth({
                 : recovery
                   ? "Salvar nova senha"
                   : mode === "login"
-                    ? "Entrar na Mestrra"
+                    ? "Entrar na mestrra"
                     : mode === "signup"
                       ? "Criar minha conta"
                       : "Enviar link de recuperação"}
@@ -221,7 +221,7 @@ export function Auth({
         )}
         <Button variant="ghost" className="mt-5 text-xs" asChild>
           <Link to="/demo">
-            Conhecer a Mestrra com dados de exemplo <ArrowRight size={14} />
+            Conhecer a mestrra com dados de exemplo <ArrowRight size={14} />
           </Link>
         </Button>
       </section>

@@ -7,7 +7,7 @@ export const Route = createFileRoute("/assinar")({
   head: () =>
     routeMeta(
       "Plano mensal completo",
-      "Conheça o plano completo da Mestrra por R$ 127/mês: estoque, precificação, marketing, vendas e caixa. Veja o que está incluído e tire suas dúvidas.",
+      "Conheça o plano completo da mestrra por R$ 127/mês: estoque, precificação, marketing, vendas e caixa. Veja o que está incluído e tire suas dúvidas.",
     ),
   component: SalesPage,
 });

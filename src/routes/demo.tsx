@@ -11,7 +11,7 @@ export const Route = createFileRoute("/demo")({
   head: () =>
     routeMeta(
       "Conheça a demonstração",
-      "Explore a Mestrra com dados de exemplo: estoque, precificação, marketing, vendas e caixa em uma única esteira.",
+      "Explore a mestrra com dados de exemplo: estoque, precificação, marketing, vendas e caixa em uma única esteira.",
     ),
   component: DemoPage,
 });

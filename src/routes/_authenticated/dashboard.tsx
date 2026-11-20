@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   ssr: false,
   beforeLoad: requireAuth,
   head: () =>
-    routeMeta("Visão geral", "Acompanhe o movimento do seu negócio em tempo real na Mestrra."),
+    routeMeta("Visão geral", "Acompanhe o movimento do seu negócio em tempo real na mestrra."),
   component: () => (
     <AuthenticatedShell>
       <DashboardPage />

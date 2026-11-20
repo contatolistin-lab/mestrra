@@ -36,7 +36,7 @@ export function Onboarding({ data }: { data: BusinessData }) {
         <div className="flex items-center gap-2 text-info text-xs font-bold uppercase tracking-wide">
           <Sparkles size={15} /> Primeiro acesso
         </div>
-        <DialogTitle>Bem-vindo à Mestrra</DialogTitle>
+        <DialogTitle>Bem-vindo à mestrra</DialogTitle>
         <DialogDescription>
           Conte um pouco sobre o seu negócio para calibrarmos sua esteira, sua hora técnica e suas
           sugestões de preço.

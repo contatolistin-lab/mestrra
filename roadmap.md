@@ -1,4 +1,4 @@
-# Mestrra
+# mestrra
 
 - [x] Revisar textos e visual da landing page, com destaque para plano e FAQ; validar no desktop e celular.
 

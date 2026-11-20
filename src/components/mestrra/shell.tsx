@@ -187,7 +187,7 @@ export function Shell({
                 side="left"
                 className="bg-brand text-brand-foreground w-[280px] p-6 flex flex-col"
               >
-                <SheetTitle className="sr-only">Menu Mestrra</SheetTitle>
+                <SheetTitle className="sr-only">Menu mestrra</SheetTitle>
                 {nav}
               </SheetContent>
             </Sheet>
@@ -297,7 +297,7 @@ export function Shell({
           )}
           {children}
           <footer className="mt-7 flex justify-between text-[10px] text-muted-foreground/70">
-            <span>Mestrra · Seu negócio em movimento.</span>
+            <span>mestrra · Seu negócio em movimento.</span>
             <span className="flex gap-1 items-center">
               <span className="size-1 rounded-full bg-success" />{" "}
               {demo ? "Demonstração" : "Dados sincronizados"}

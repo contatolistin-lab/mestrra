@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { SalesPage } from "@/components/mestrra/sales-page";
+import { isDemoMode } from "@/lib/demo-mode";
 import { routeMeta } from "@/lib/mestrra";
 import { supabase } from "@/integrations/supabase/resolved-client";
 
@@ -19,7 +20,7 @@ function Index() {
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) void navigate({ to: "/dashboard", replace: true });
+      if (!isDemoMode && data.user) void navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
 

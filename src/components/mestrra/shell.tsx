@@ -133,6 +133,16 @@ export function Shell({
           <Settings size={18} />
           Configurações
         </Link>
+        <button
+          type="button"
+          className="nav-item w-full text-left"
+          onClick={() =>
+            demo ? void navigate({ to: "/auth", search: { mode: "login" } }) : void logout()
+          }
+        >
+          <LogOut size={18} />
+          {demo ? "Entrar na minha conta" : "Sair"}
+        </button>
       </div>
       <div className="mt-auto">
         <div className="rounded-lg bg-brand-foreground/5 p-4 mb-5">

@@ -7,7 +7,7 @@ export function Brand() {
         <i />
         <i />
       </span>
-      Mestrra<span className="text-primary text-xs self-start mt-1">®</span>
+      mestrra<span className="text-primary text-xs self-start mt-1">®</span>
     </div>
   );
 }

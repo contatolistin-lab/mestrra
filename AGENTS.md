@@ -30,3 +30,6 @@ use the editor.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 
 <!-- LOVABLE:END -->
+
+- Keep the public home and subscription page on the shared SalesPage presentation so offer details and checkout remain consistent.
+- Use a captured demo workspace asset for landing-page product imagery so visitors inspect the actual app rather than fictional results.

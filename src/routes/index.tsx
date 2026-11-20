@@ -8,8 +8,8 @@ import { supabase } from "@/integrations/supabase/resolved-client";
 export const Route = createFileRoute("/")({
   head: () =>
     routeMeta(
-      "Seu negócio em movimento",
-      "Assine a Mestrra por R$ 127/mês e conecte estoque, precificação, marketing, vendas e caixa em uma só esteira.",
+      "Gestão e precificação para pequenos negócios",
+      "Seu custo vira preço. Sua venda vira resultado. Conheça a Mestrra: estoque, precificação, conteúdo, cobranças e caixa por R$ 127/mês.",
     ),
   component: Index,
 });

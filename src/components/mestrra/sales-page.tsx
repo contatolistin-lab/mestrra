@@ -1,1056 +1,612 @@
-import { useEffect, useState, type FormEvent, type PointerEvent, type ReactNode } from "react";
+import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
   Bot,
-  Boxes,
   Check,
-  CheckCircle2,
-  ChevronDown,
-  Clock3,
   CreditCard,
-  LineChart,
   LoaderCircle,
   LockKeyhole,
   Menu,
-  MessageCircle,
   Package,
   RefreshCcw,
   ShieldCheck,
-  Sparkles,
-  Star,
-  TrendingUp,
   Wallet,
   X,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 
 import { Brand } from "@/components/mestrra/brand";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { money } from "@/lib/mestrra";
-import { SUBSCRIPTION_BENEFITS, SUBSCRIPTION_PRICE } from "@/lib/subscription";
+import { SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import { createSubscriptionCheckout } from "@/lib/subscription.functions";
+import workspace from "@/assets/mestrra-workspace.webp.asset.json";
 
-type Feature = {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  accent: string;
-};
-
+type Feature = { icon: LucideIcon; title: string; description: string; detail: string };
 const features: Feature[] = [
   {
     icon: Package,
-    title: "Estoque que se atualiza sozinho",
+    title: "Saiba o que tem. E o que falta.",
     description:
-      "Cada venda baixa o estoque e avisa quando é hora de repor. Sem planilha, sem esquecimento.",
-    accent: "from-info/25 to-transparent",
+      "Controle insumos e recursos, acompanhe o custo por unidade e identifique o que precisa de reposição.",
+    detail: "Estoque & recursos",
   },
   {
-    icon: LineChart,
-    title: "Preço com margem real",
+    icon: BarChart3,
+    title: "Cobre com custo e margem na conta.",
     description:
-      "Insumo, mão de obra, taxas e margem viram um preço que fecha a conta — em segundos.",
-    accent: "from-primary/25 to-transparent",
+      "Combine materiais, tempo de trabalho, despesas fixas e taxas para calcular o preço de produtos e serviços.",
+    detail: "Precificação inteligente",
   },
   {
     icon: Bot,
-    title: "Copiloto de conteúdo",
-    description: "Posts e mensagens prontos para Instagram e WhatsApp, no tom do seu negócio.",
-    accent: "from-success/25 to-transparent",
+    title: "Pare de começar cada post do zero.",
+    description:
+      "Transforme os benefícios da sua oferta em roteiros, legendas e mensagens para Instagram e WhatsApp.",
+    detail: "Copiloto de marketing",
   },
   {
     icon: CreditCard,
-    title: "Cobrança conectada",
-    description: "Gere links e QR Codes com Mercado Pago e acompanhe o pagamento chegar ao caixa.",
-    accent: "from-info/25 to-transparent",
+    title: "Do pedido ao pagamento.",
+    description:
+      "Registre vendas manuais ou conecte sua conta Mercado Pago para gerar cobranças e acompanhar os pagamentos.",
+    detail: "Vendas & cobranças",
   },
   {
     icon: Wallet,
-    title: "Caixa 360º",
-    description: "Entradas, saídas e resultado do mês em um painel que qualquer pessoa entende.",
-    accent: "from-primary/25 to-transparent",
-  },
-  {
-    icon: Zap,
-    title: "Esteira em movimento",
-    description: "Do primeiro insumo à próxima venda, tudo conectado em uma sequência simples.",
-    accent: "from-success/25 to-transparent",
+    title: "Veja o que realmente fica para você.",
+    description:
+      "Acompanhe faturamento, custos, despesas e resultado do período sem juntar números de várias ferramentas.",
+    detail: "Caixa 360º",
   },
 ];
-
-const steps: { number: string; icon: LucideIcon; title: string; description: string }[] = [
-  {
-    number: "01",
-    icon: Boxes,
-    title: "Organize",
-    description: "Cadastre insumos, produtos e serviços. A Mestrra monta sua base em minutos.",
-  },
-  {
-    number: "02",
-    icon: Sparkles,
-    title: "Decida",
-    description: "Calcule preços, crie conteúdo e veja o que faz sentido para o seu momento.",
-  },
-  {
-    number: "03",
-    icon: TrendingUp,
-    title: "Venda",
-    description: "Cobre, acompanha e reinveste com os números do seu negócio sempre à mão.",
-  },
-];
-
-const problems: { icon: LucideIcon; title: string; description: string }[] = [
-  {
-    icon: BarChart3,
-    title: "Preço no achismo",
-    description: "Você calcula rápido, mas nunca tem certeza se a margem realmente fechou.",
-  },
-  {
-    icon: Package,
-    title: "Estoque na cabeça",
-    description: "O que vendeu, o que falta e o que parou de movimentar ficam espalhados.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Conteúdo travado",
-    description: "Você sabe que precisa postar, mas a inspiração nunca chega na hora.",
-  },
-  {
-    icon: Wallet,
-    title: "Caixa no escuro",
-    description: "Dinheiro entrou, mas você não sabe ao certo de onde veio ou para onde foi.",
-  },
-];
-
-const audiences: { icon: LucideIcon; title: string; description: string }[] = [
-  {
-    icon: Sparkles,
-    title: "Produtores e artesãos",
-    description: "Do insumo ao pedido, com preço justo e estoque sob controle.",
-  },
-  {
-    icon: Bot,
-    title: "Estúdios e serviços",
-    description: "Precificação de horas, cobrança e conteúdo sem perder a virada do dia.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Marcas em crescimento",
-    description: "Números, vendas e caixa conectados para decidir com mais confiança.",
-  },
-];
-
-const beforeAfter = [
-  {
-    before: "Planilha de preço que ninguém atualiza",
-    after: "Simulador com custo, taxa e margem em segundos",
-  },
-  {
-    before: "Estoque conferido na mão",
-    after: "Baixa automática a cada venda realizada",
-  },
-  {
-    before: "Cobrança e caixa em lugares diferentes",
-    after: "Mercado Pago e caixa atualizados juntos",
-  },
-  {
-    before: "Post adiado porque não sabia o que escrever",
-    after: "Copiloto sugere conteúdo para Instagram e WhatsApp",
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "Eu precificava no achismo. Hoje fecho o preço em minutos e sei exatamente quanto sobra.",
-    name: "Ana Beatriz",
-    role: "Doces artesanais · SP",
-    initials: "AB",
-  },
-  {
-    quote:
-      "O que mais mudou foi a rotina: estoque, cobrança e caixa pararam de viver em lugares diferentes.",
-    name: "Rafael Costa",
-    role: "Estúdio de design · MG",
-    initials: "RC",
-  },
-  {
-    quote:
-      "Consigo postar e vender no mesmo dia. Parece que finalmente tenho um time cuidando do meu negócio.",
-    name: "Camila Rocha",
-    role: "Cosméticos naturais · PR",
-    initials: "CR",
-  },
-];
-
 const faqs = [
   {
-    question: "Como funciona a cobrança?",
+    group: "Seu negócio",
+    question: "Vendo serviços, não produtos. A Mestrra também serve para mim?",
     answer:
-      "A assinatura é mensal, no valor de R$ 127,00, processada pelo Mercado Pago. Você informa seu e-mail, é levado ao checkout e escolhe como quer pagar. As próximas cobranças seguem a recorrência mensal.",
+      "Sim. Na precificação, você pode trabalhar com o tempo de execução e o valor da sua hora, além de incluir os materiais usados no atendimento. Depois, use a mesma oferta para criar conteúdo, registrar vendas e acompanhar o caixa. O estoque é útil quando seu serviço consome insumos; não é necessário inventar um produto físico para começar.",
   },
   {
-    question: "Preciso ter uma conta no Mercado Pago?",
+    group: "Precificação",
+    question: "Como o preço calculado considera minha mão de obra e meu lucro?",
     answer:
-      "Sim. O checkout é do Mercado Pago, então você usa sua conta para concluir a assinatura e gerenciar o meio de pagamento.",
+      "A Mestrra soma o custo dos materiais à mão de obra, calculada pelo tempo de execução e pelo valor da hora. Sobre essa base, considera o percentual de despesas fixas informado. O preço sugerido incorpora taxas e margem de lucro como percentuais do preço de venda. Você define esses valores e pode simular cenários antes de salvar; a sugestão não é uma garantia de lucro nem substitui a revisão dos seus custos.",
   },
   {
-    question: "Posso cancelar quando quiser?",
+    group: "Estoque",
+    question: "A venda dá baixa nos insumos ou só no produto final?",
     answer:
-      "Pode. Você gerencia a assinatura direto no Mercado Pago, sem contrato de fidelidade com a Mestrra.",
+      "A baixa usa a ficha técnica do item vendido: os insumos e as quantidades que você cadastrou para produzir uma unidade. Por isso, cadastre a receita e confira as unidades de medida antes de registrar a venda. Nos serviços, a mesma lógica vale para os materiais utilizados no atendimento.",
   },
   {
-    question: "O que está incluído no plano?",
+    group: "Conteúdo",
+    question: "O copiloto publica no Instagram e envia mensagens pelo WhatsApp?",
     answer:
-      "Toda a esteira da Mestrra: estoque, precificação, copiloto de marketing, vendas, cobranças e caixa, com atualizações incluídas.",
+      "Não. Ele prepara o texto a partir do item cadastrado, do público, dos benefícios e do tom escolhido. Você recebe sugestões de roteiros de Reels, Stories, legendas ou mensagens de WhatsApp para revisar e copiar. A publicação e o envio continuam com você, nas suas próprias contas.",
   },
   {
-    question: "Posso conhecer antes de assinar?",
+    group: "Pagamentos",
+    question: "Preciso conectar o Mercado Pago para usar estoque, preços e caixa?",
     answer:
-      "Pode. Abra a demonstração com dados de exemplo e veja estoque, precificação, conteúdo, cobranças e caixa funcionando antes de escolher o plano.",
+      "Não. Você pode organizar o estoque, precificar, criar conteúdo e registrar vendas manualmente sem conectar sua conta. A conexão é necessária para gerar cobranças pelo Mercado Pago e acompanhar a confirmação dos pagamentos pela integração. O pagamento da assinatura Mestrra é separado das cobranças que você faz aos seus clientes.",
+  },
+  {
+    group: "Plano mensal",
+    question: "Os R$ 127 por mês incluem as taxas das minhas vendas?",
+    answer:
+      "A mensalidade inclui o acesso à esteira de estoque, precificação, conteúdo, vendas e caixa da Mestrra. As tarifas de processamento das cobranças aos seus clientes são definidas pelo Mercado Pago e não estão incluídas na assinatura. Confira as condições da sua conta e considere essas taxas ao calcular seus preços.",
+  },
+  {
+    group: "Assinatura",
+    question: "Como funciona a recorrência e onde cancelo a assinatura?",
+    answer:
+      "A assinatura custa R$ 127,00 por mês e é processada pelo Mercado Pago. Antes de concluir, confira no checkout o meio de pagamento e as condições da recorrência. Não há fidelidade: você pode gerenciar ou cancelar a assinatura na sua conta do Mercado Pago.",
+  },
+  {
+    group: "Antes de assinar",
+    question: "Consigo testar a rotina completa sem cadastrar meu negócio?",
+    answer:
+      "Sim. A demonstração abre um negócio com dados de exemplo para você explorar o estoque, a precificação, o copiloto e as vendas. Ela não cobra sua assinatura nem representa vendas ou pagamentos reais. Quando decidir usar a Mestrra no seu negócio, crie sua própria conta e cadastre suas informações.",
   },
 ];
-
-const marqueeItems = [
-  "5 etapas conectadas",
-  "1 plano único",
-  "R$ 127 por mês",
-  "Checkout Mercado Pago",
-  "Cancele quando quiser",
-  "Acesso imediato",
+const routines = [
+  {
+    title: "Para quem produz",
+    description:
+      "Doces, artesanato, cosméticos e outros produtos: leve o custo de cada insumo até o preço e a venda.",
+    example: "Material → ficha técnica → preço",
+  },
+  {
+    title: "Para quem presta serviços",
+    description:
+      "Atendimentos, projetos e trabalhos sob demanda: coloque seu tempo na conta e acompanhe o resultado.",
+    example: "Horas → valor do serviço → cobrança",
+  },
+  {
+    title: "Para quem cuida de tudo",
+    description:
+      "MEIs e pequenos negócios que precisam decidir, divulgar e vender sem perder de vista o caixa.",
+    example: "Oferta → conteúdo → venda → caixa",
+  },
 ];
-
-function useReveal() {
-  useEffect(() => {
-    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
-    if (!("IntersectionObserver" in window)) {
-      elements.forEach((element) => element.classList.add("is-visible"));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" },
-    );
-
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
-}
-
-function handleHeroPointer(event: PointerEvent<HTMLElement>) {
-  const bounds = event.currentTarget.getBoundingClientRect();
-  event.currentTarget.style.setProperty("--mouse-x", `${event.clientX - bounds.left}px`);
-  event.currentTarget.style.setProperty("--mouse-y", `${event.clientY - bounds.top}px`);
-}
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  align = "center",
-}: {
-  eyebrow: string;
-  title: ReactNode;
-  description: string;
-  align?: "center" | "left";
-}) {
-  return (
-    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <span className="inline-flex items-center gap-2 rounded-full border border-info/25 bg-info-soft/70 px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-info uppercase">
-        <span className="size-1.5 rounded-full bg-info sales-pulse-dot" />
-        {eyebrow}
-      </span>
-      <h2 className="mt-5 text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-        {title}
-      </h2>
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-        {description}
-      </p>
-    </div>
-  );
-}
 
 function CheckoutForm() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setBusy(true);
-
     try {
       const { checkoutUrl } = await createSubscriptionCheckout({ data: { email } });
       window.location.assign(checkoutUrl);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível abrir o checkout.");
+    } catch {
+      setError("Não foi possível abrir o pagamento agora. Tente novamente em instantes.");
       setBusy(false);
     }
   }
-
   return (
     <form onSubmit={(event) => void handleSubmit(event)}>
-      <label htmlFor="checkout-email" className="block text-sm font-bold text-foreground">
-        Informe seu e-mail para começar
+      <label htmlFor="checkout-email" className="text-sm font-semibold">
+        Seu e-mail
       </label>
-      <div className="mt-2 flex flex-col gap-3">
-        <input
-          id="checkout-email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="seu@email.com"
-          className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-background px-4 text-sm text-foreground outline-none transition focus:border-info focus:ring-2 focus:ring-info/20"
-        />
-        <Button
-          type="submit"
-          disabled={busy}
-          className="h-12 w-full rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.02] hover:bg-primary/90 disabled:hover:scale-100"
-        >
-          {busy ? <LoaderCircle className="animate-spin" size={17} /> : <ArrowRight size={17} />}
-          {busy ? "Abrindo checkout..." : "Quero começar agora"}
-        </Button>
-      </div>
+      <input
+        id="checkout-email"
+        name="email"
+        type="email"
+        required
+        autoComplete="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="voce@seunegocio.com.br"
+        className="mt-2 h-12 w-full rounded-lg border border-input bg-background px-4 text-sm outline-none focus:border-info focus:ring-2 focus:ring-info/20"
+      />
+      <Button type="submit" disabled={busy} className="mt-3 h-12 w-full text-sm font-bold">
+        {busy ? <LoaderCircle size={17} className="animate-spin" /> : <ArrowRight size={17} />}
+        {busy ? "Abrindo pagamento…" : "Assinar Mestrra"}
+      </Button>
       {error && (
-        <p
-          role="alert"
-          className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive"
-        >
+        <p role="alert" className="mt-3 text-sm text-destructive">
           {error}
         </p>
       )}
-      <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground">
-        <ShieldCheck size={14} className="mt-0.5 shrink-0 text-success" />
-        Pagamento seguro. Seus dados de cartão não passam por este site.
+      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+        <LockKeyhole size={14} className="mt-0.5 shrink-0" />
+        Você será direcionado ao Mercado Pago para concluir a assinatura com segurança.
       </p>
     </form>
   );
 }
 
 export function SalesPage() {
-  useReveal();
   const [menuOpen, setMenuOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-brand/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="#inicio" aria-label="Mestrra, voltar ao início" className="text-white">
+    <div className="sales-page min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-lg">
+        <div className="sales-container flex h-[72px] items-center justify-between gap-4">
+          <a href="#inicio" aria-label="Mestrra, início">
             <Brand />
           </a>
-          <nav className="hidden items-center gap-7 text-sm text-white/70 lg:flex">
-            <a href="#problema" className="transition hover:text-white">
-              O problema
+          <nav
+            aria-label="Navegação principal"
+            className="hidden items-center gap-7 text-sm font-medium text-muted-foreground lg:flex"
+          >
+            <a href="#recursos" className="hover:text-foreground">
+              O que você resolve
             </a>
-            <a href="#recursos" className="transition hover:text-white">
-              Recursos
-            </a>
-            <a href="#como-funciona" className="transition hover:text-white">
+            <a href="#como-funciona" className="hover:text-foreground">
               Como funciona
             </a>
-            <a href="#precos" className="transition hover:text-white">
-              Preços
+            <a href="#precos" className="hover:text-foreground">
+              Plano mensal
             </a>
-            <a href="#faq" className="transition hover:text-white">
-              FAQ
+            <a href="#faq" className="hover:text-foreground">
+              Dúvidas
             </a>
           </nav>
-          <div className="hidden items-center gap-2 md:flex">
-            <Link
-              to="/auth"
-              search={{ mode: "login" }}
-              className="rounded-full px-3 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/auth"
-              search={{ mode: "signup" }}
-              className="rounded-full border border-white/25 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-            >
-              Cadastro
-            </Link>
-            <a
-              href="#precos"
-              className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.03]"
-            >
-              Assinar agora <ArrowUpRight size={14} />
-            </a>
+          <div className="hidden items-center gap-3 md:flex">
+            <Button variant="ghost" asChild>
+              <Link to="/auth" search={{ mode: "login" }}>
+                Entrar
+              </Link>
+            </Button>
+            <Button asChild>
+              <a href="#precos">
+                Conhecer o plano <ArrowUpRight size={15} />
+              </a>
+            </Button>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMenuOpen(!menuOpen)}
             aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-            className="grid size-9 place-items-center rounded-lg border border-white/15 text-white md:hidden"
+            aria-controls="sales-mobile-menu"
+            className="md:hidden"
           >
-            {menuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </Button>
         </div>
         {menuOpen && (
-          <nav className="flex flex-col gap-1 border-t border-white/10 bg-brand px-5 py-4 text-sm text-white/80 md:hidden">
+          <nav
+            id="sales-mobile-menu"
+            aria-label="Navegação móvel"
+            className="sales-container grid gap-1 border-t py-4 md:hidden"
+          >
             {[
-              ["O problema", "#problema"],
-              ["Recursos", "#recursos"],
+              ["O que você resolve", "#recursos"],
               ["Como funciona", "#como-funciona"],
-              ["Preços", "#precos"],
-              ["Depoimentos", "#depoimentos"],
-              ["FAQ", "#faq"],
+              ["Plano mensal", "#precos"],
+              ["Dúvidas", "#faq"],
             ].map(([label, href]) => (
-              <a
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg px-2 py-2 transition hover:bg-white/10"
-              >
+              <a key={href} href={href} onClick={() => setMenuOpen(false)} className="py-2 text-sm">
                 {label}
               </a>
             ))}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Link
-                to="/auth"
-                search={{ mode: "login" }}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg border border-white/20 px-3 py-2 text-center text-xs font-bold"
-              >
-                Entrar
+            <Button variant="outline" asChild>
+              <Link to="/auth" search={{ mode: "login" }}>
+                Entrar na minha conta
               </Link>
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg bg-white/10 px-3 py-2 text-center text-xs font-bold"
-              >
-                Cadastro
-              </Link>
-            </div>
-            <a
-              href="#precos"
-              onClick={() => setMenuOpen(false)}
-              className="mt-2 rounded-lg bg-primary px-3 py-2 text-center text-xs font-bold text-primary-foreground"
-            >
-              Assinar por {money(SUBSCRIPTION_PRICE)}/mês
-            </a>
+            </Button>
           </nav>
         )}
       </header>
-
       <main>
-        <section
-          id="inicio"
-          onPointerMove={handleHeroPointer}
-          className="sales-hero relative overflow-hidden pt-32 pb-24 text-white sm:pt-40 sm:pb-32"
-        >
-          <div className="sales-grid-bg pointer-events-none absolute inset-0 opacity-60" />
-          <div className="sales-orb sales-orb-one pointer-events-none absolute top-10 -left-24 size-80 rounded-full bg-info/20 blur-3xl" />
-          <div className="sales-orb sales-orb-two pointer-events-none absolute right-0 bottom-0 size-96 rounded-full bg-primary/15 blur-3xl" />
-
-          <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase backdrop-blur">
-                <Sparkles size={13} className="text-primary" /> A esteira completa do seu negócio
-              </span>
-              <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
-                Seu negócio em
-                <span className="sales-shimmer block bg-gradient-to-r from-primary via-orange-200 to-info bg-clip-text text-transparent">
-                  modo avançado.
-                </span>
-              </h1>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg">
-                Estoque, precificação, marketing, vendas e caixa trabalhando juntos. Menos planilha,
-                menos achismo e mais tempo para fazer o que você faz melhor.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href="#precos"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-xl shadow-primary/25 transition hover:scale-[1.03]"
-                >
-                  Quero começar por {money(SUBSCRIPTION_PRICE)}/mês <ArrowRight size={17} />
+        <section id="inicio" className="sales-intro scroll-mt-20 overflow-hidden bg-card">
+          <div className="sales-container relative pt-10 text-center sm:pt-12">
+            <p className="sales-eyebrow">Para quem faz o negócio acontecer</p>
+            <h1 className="mt-3 text-5xl font-extrabold sm:text-6xl">
+              Mestrra<span className="text-primary">.</span>
+            </h1>
+            <p className="mx-auto mt-3 max-w-3xl text-2xl leading-tight font-bold sm:text-3xl">
+              Seu custo vira preço. Sua venda vira resultado.
+            </p>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Estoque, precificação, conteúdo, cobrança e caixa conectados para você cuidar do
+              negócio — sem decidir tudo no escuro.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild className="h-11 px-6">
+                <a href="#precos">
+                  Conhecer o plano mensal <ArrowRight size={16} />
                 </a>
-                <Link
-                  to="/demo"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
-                >
-                  Ver demonstração <ArrowUpRight size={16} />
+              </Button>
+              <Button asChild variant="outline" className="h-11 px-6">
+                <Link to="/demo">
+                  Explorar demonstração <ArrowUpRight size={16} />
                 </Link>
-              </div>
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-white/50">
-                {[
-                  "Sem contrato de fidelidade",
-                  "Cancele quando quiser",
-                  "Cobrança segura Mercado Pago",
-                ].map((item) => (
-                  <span key={item} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-success" />
-                    {item}
-                  </span>
-                ))}
-              </div>
+              </Button>
             </div>
-
-            <div className="relative mx-auto w-full max-w-[540px]">
-              <div className="absolute -inset-6 rounded-[40px] bg-info/15 blur-3xl" />
-              <div className="sales-float relative rounded-[28px] border border-white/15 bg-white/5 p-3 shadow-2xl backdrop-blur-xl">
-                <div className="rounded-[22px] bg-card p-5 text-foreground shadow-xl">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
-                        Visão geral
-                      </p>
-                      <p className="mt-1 text-lg font-extrabold">Seu negócio hoje</p>
-                    </div>
-                    <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success">
-                      <span className="size-1.5 rounded-full bg-success" />
-                      Tudo conectado
-                    </span>
-                  </div>
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {[
-                      { label: "Vendas do mês", value: "R$ 8.420", icon: TrendingUp },
-                      { label: "Margem média", value: "42,8%", icon: BarChart3 },
-                    ].map((metric) => (
-                      <div key={metric.label} className="rounded-2xl border bg-secondary/50 p-3">
-                        <metric.icon size={15} className="text-info" />
-                        <p className="mt-3 text-[10px] text-muted-foreground">{metric.label}</p>
-                        <p className="text-lg font-extrabold">{metric.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 rounded-2xl border bg-secondary/30 p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                        Ritmo de vendas
-                      </p>
-                      <span className="text-[10px] font-bold text-success">+18,4%</span>
-                    </div>
-                    <div className="mt-4 flex h-24 items-end gap-2">
-                      {[38, 52, 44, 70, 58, 84, 68, 92, 76, 100].map((height, index) => (
-                        <div
-                          key={index}
-                          className="sales-bar flex-1 rounded-t-md bg-gradient-to-t from-info/30 to-info"
-                          style={{ height: `${height}%`, animationDelay: `${index * 70}ms` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="sales-float absolute -left-4 top-24 w-52 rounded-2xl border border-white/15 bg-brand/90 p-4 shadow-2xl backdrop-blur-xl sm:-left-12"
-                style={{ animationDelay: "-2.5s" }}
-              >
-                <div className="flex items-center gap-2 text-primary">
-                  <Package size={16} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase">Estoque</span>
-                </div>
-                <p className="mt-3 text-2xl font-extrabold text-white">12 itens</p>
-                <p className="mt-1 text-[11px] text-white/50">3 precisam de reposição</p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-info to-primary" />
-                </div>
-              </div>
-
-              <div
-                className="sales-float absolute -right-3 -bottom-4 w-56 rounded-2xl border border-white/15 bg-card p-4 text-foreground shadow-2xl sm:-right-8"
-                style={{ animationDelay: "-5s" }}
-              >
-                <div className="flex items-center gap-2 text-info">
-                  <Bot size={16} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase">Copiloto</span>
-                </div>
-                <p className="mt-3 text-xs leading-relaxed font-semibold">
-                  &ldquo;Post sugerido para hoje: bastidores da produção + oferta da semana.&rdquo;
-                </p>
-                <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-success">
-                  <Sparkles size={12} /> Pronto para publicar
-                </div>
-              </div>
-            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              {money(SUBSCRIPTION_PRICE)}/mês · Plano completo · Sem fidelidade
+            </p>
+            <Link
+              to="/demo"
+              className="sales-product-glimpse mt-8 block"
+              aria-label="Explorar o painel da Mestrra na demonstração"
+            >
+              <img
+                src={workspace.url}
+                alt="Painel real da demonstração Mestrra com faturamento, custos, lucro e movimento do caixa do Doce Atelier."
+                width={1280}
+                height={950}
+                className="w-full"
+                fetchPriority="high"
+              />
+            </Link>
           </div>
         </section>
 
-        <section className="border-y border-border bg-card/60 py-5">
-          <div className="sales-marquee overflow-hidden">
-            <div className="sales-marquee-track flex w-max items-center gap-10">
-              {[...marqueeItems, ...marqueeItems].map((item, index) => (
-                <span
-                  key={`${item}-${index}`}
-                  className="flex shrink-0 items-center gap-10 text-xs font-bold tracking-[0.18em] text-muted-foreground uppercase"
-                >
-                  {item}
-                  <Sparkles size={14} className="text-primary" />
+        <section className="border-y bg-brand py-5 text-brand-foreground">
+          <div className="sales-container flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-semibold sm:text-sm">
+            {["Estoque", "Precificação", "Marketing", "Cobrança", "Caixa"].map((step, index) => (
+              <span key={step} className="flex items-center gap-6">
+                <span className="flex items-center gap-2">
+                  <span className="text-info">0{index + 1}</span>
+                  {step}
                 </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="problema" className="scroll-mt-20 bg-background py-24 sm:py-28">
-          <div className="mx-auto max-w-7xl px-5 sm:px-8">
-            <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div data-reveal className="sales-reveal">
-                <SectionHeading
-                  eyebrow="O problema"
-                  title={
-                    <>
-                      Você não está desorganizado<span className="text-info">.</span> Você está
-                      desconectado.
-                    </>
-                  }
-                  description="O preço está na planilha, o estoque na memória, a cobrança no aplicativo e o caixa em outro lugar. O problema não é esforço: é falta de conexão."
-                  align="left"
-                />
-                <a
-                  href="#como-funciona"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-info transition hover:gap-3"
-                >
-                  Veja como a esteira funciona <ArrowRight size={16} />
-                </a>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {problems.map((problem, index) => (
-                  <div
-                    key={problem.title}
-                    data-reveal
-                    className="sales-reveal sales-card-hover rounded-2xl border bg-card p-5 shadow-sm"
-                    style={{ transitionDelay: `${index * 70}ms` }}
-                  >
-                    <div className="grid size-10 place-items-center rounded-xl bg-destructive/10 text-destructive">
-                      <problem.icon size={18} />
-                    </div>
-                    <h3 className="mt-4 text-sm font-extrabold">{problem.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                      {problem.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="recursos"
-          className="mx-auto max-w-7xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28"
-        >
-          <div data-reveal className="sales-reveal">
-            <SectionHeading
-              eyebrow="Tudo no mesmo lugar"
-              title={
-                <>
-                  Uma esteira. <span className="text-info">Todas as peças.</span>
-                </>
-              }
-              description="Você não precisa de cinco ferramentas para gerir um negócio. A Mestrra conecta o que importa e tira o peso da operação do seu dia."
-            />
-          </div>
-
-          <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature, index) => (
-              <article
-                key={feature.title}
-                data-reveal
-                className="sales-reveal sales-card-hover group relative overflow-hidden rounded-3xl border bg-card p-6 shadow-sm"
-                style={{ transitionDelay: `${index * 60}ms` }}
-              >
-                <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${feature.accent} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
-                />
-                <div className="relative">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-secondary text-info transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110">
-                    <feature.icon size={20} />
-                  </div>
-                  <h3 className="mt-5 text-lg font-extrabold tracking-tight">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              </article>
+                {index < 4 && (
+                  <ArrowRight size={13} className="hidden text-brand-foreground/35 sm:block" />
+                )}
+              </span>
             ))}
           </div>
         </section>
 
-        <section id="para-quem" className="scroll-mt-20 bg-secondary/40 py-24 sm:py-28">
-          <div className="mx-auto max-w-7xl px-5 sm:px-8">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Feita para o seu tipo de negócio"
-                title={
-                  <>
-                    Se o seu dia tem produção, preço e venda,{" "}
-                    <span className="text-info">esta página é sua.</span>
-                  </>
-                }
-                description="Você não precisa mudar o jeito que trabalha. A Mestrra entra na rotina para dar clareza ao que já existe."
-              />
-            </div>
-            <div className="mt-14 grid gap-4 md:grid-cols-3">
-              {audiences.map((audience, index) => (
-                <div
-                  key={audience.title}
-                  data-reveal
-                  className="sales-reveal sales-card-hover rounded-3xl border bg-card p-6 shadow-sm"
-                  style={{ transitionDelay: `${index * 90}ms` }}
-                >
-                  <div className="grid size-11 place-items-center rounded-2xl bg-info-soft text-info">
-                    <audience.icon size={20} />
-                  </div>
-                  <h3 className="mt-5 text-lg font-extrabold">{audience.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {audience.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="como-funciona"
-          className="relative scroll-mt-20 overflow-hidden bg-brand py-24 text-white sm:py-28"
-        >
-          <div className="sales-grid-bg pointer-events-none absolute inset-0 opacity-40" />
-          <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Como funciona"
-                title={
-                  <>
-                    <span className="text-primary">Do caos ao clique.</span>
-                  </>
-                }
-                description="Três passos para transformar a forma como você Decide, produz e vende."
-              />
-            </div>
-            <div className="relative mt-16 grid gap-8 md:grid-cols-3">
-              <div className="absolute top-8 right-[16%] left-[16%] hidden h-px bg-gradient-to-r from-transparent via-white/20 to-transparent md:block" />
-              {steps.map((step, index) => (
-                <div
-                  key={step.number}
-                  data-reveal
-                  className="sales-reveal relative text-center"
-                  style={{ transitionDelay: `${index * 120}ms` }}
-                >
-                  <div className="relative mx-auto grid size-16 place-items-center rounded-2xl border border-white/15 bg-white/5 text-primary backdrop-blur">
-                    <step.icon size={24} />
-                    <span className="absolute -top-2 -right-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-extrabold text-primary-foreground">
-                      {step.number}
-                    </span>
-                  </div>
-                  <h3 className="mt-6 text-xl font-extrabold">{step.title}</h3>
-                  <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-white/55">
-                    {step.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-14 flex flex-wrap items-center justify-center gap-3 text-xs text-white/55">
-              {["Configuração em minutos", "Sem planilha", "Acesso imediato"].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="antes-depois" className="scroll-mt-20 bg-background py-24 sm:py-28">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Antes e depois"
-                title={
-                  <>
-                    A mesma rotina. <span className="text-info">Outro ritmo.</span>
-                  </>
-                }
-                description="Veja o que muda quando estoque, preço, conteúdo, cobrança e caixa deixam de trabalhar separados."
-              />
-            </div>
-            <div className="mt-14 grid gap-4 md:grid-cols-2">
-              <div className="rounded-3xl border bg-card p-7 shadow-sm">
-                <p className="flex items-center gap-2 text-xs font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
-                  <X size={15} className="text-destructive" /> Antes
-                </p>
-                <div className="mt-6 space-y-4">
-                  {beforeAfter.map((row) => (
-                    <p
-                      key={row.before}
-                      className="flex items-start gap-3 text-sm text-muted-foreground"
-                    >
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-destructive" />
-                      {row.before}
-                    </p>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-3xl border border-success/30 bg-success-soft/40 p-7 shadow-sm">
-                <p className="flex items-center gap-2 text-xs font-extrabold tracking-[0.16em] text-success uppercase">
-                  <Check size={15} /> Com Mestrra
-                </p>
-                <div className="mt-6 space-y-4">
-                  {beforeAfter.map((row) => (
-                    <p
-                      key={row.after}
-                      className="flex items-start gap-3 text-sm font-medium text-foreground"
-                    >
-                      <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
-                        <Check size={11} strokeWidth={3} />
-                      </span>
-                      {row.after}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="precos" className="scroll-mt-20 bg-secondary/40 py-24 sm:py-28">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Plano único, sem complicação"
-                title={
-                  <>
-                    Um preço. <span className="text-info">A esteira inteira.</span>
-                  </>
-                }
-                description="Sem planos escondidos, sem surpresa na fatura. Você paga apenas a mensalidade e usa tudo o que a Mestrra oferece."
-              />
-            </div>
-
-            <div data-reveal className="sales-reveal relative mx-auto mt-14 max-w-6xl">
-              <div className="absolute -inset-1 rounded-[36px] bg-gradient-to-br from-primary/50 via-info/30 to-transparent blur-md" />
-              <div className="relative overflow-hidden rounded-[34px] border bg-card shadow-2xl shadow-info/10">
-                <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-                  <div className="relative overflow-hidden bg-brand p-8 text-white sm:p-10">
-                    <div className="sales-grid-bg pointer-events-none absolute inset-0 opacity-40" />
-                    <div className="relative">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-[0.16em] text-white/80 uppercase">
-                          <span className="size-1.5 rounded-full bg-primary sales-pulse-dot" />
-                          Plano mensal
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-extrabold text-primary-foreground shadow-lg shadow-primary/25">
-                          <Sparkles size={12} /> Mais escolhido
-                        </span>
-                      </div>
-                      <h3 className="mt-10 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                        Mestrra completa
-                      </h3>
-                      <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-                        A esteira inteira para organizar, decidir, produzir e vender em um só lugar.
-                      </p>
-                      <div className="mt-9 flex items-end gap-2">
-                        <span className="text-5xl font-extrabold tracking-tight sm:text-6xl">
-                          {money(SUBSCRIPTION_PRICE)}
-                        </span>
-                        <span className="pb-2 text-lg font-semibold text-white/50">/mês</span>
-                      </div>
-                      <p className="mt-2 text-sm text-white/60">
-                        Recorrência mensal via Mercado Pago. Cancele quando quiser.
-                      </p>
-                      <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/10 pt-6">
-                        {[
-                          { icon: Clock3, label: "Acesso imediato" },
-                          { icon: RefreshCcw, label: "Sem fidelidade" },
-                          { icon: ShieldCheck, label: "Checkout seguro" },
-                        ].map((item) => (
-                          <div
-                            key={item.label}
-                            className="flex items-center gap-2 text-[11px] font-semibold text-white/70"
-                          >
-                            <item.icon size={14} className="shrink-0 text-primary" />
-                            {item.label}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-8 sm:p-10">
-                    <CheckoutForm />
-                    <div className="mt-9 border-t pt-7">
-                      <p className="text-xs font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
-                        Incluído no seu plano
-                      </p>
-                      <div className="mt-5 grid gap-3.5">
-                        {SUBSCRIPTION_BENEFITS.map((benefit) => (
-                          <div key={benefit} className="flex items-start gap-3 text-sm">
-                            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-success-soft text-success">
-                              <Check size={12} strokeWidth={3} />
-                            </span>
-                            <span className="leading-relaxed text-foreground/80">{benefit}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="depoimentos" className="scroll-mt-20 bg-background py-24 sm:py-28">
-          <div className="mx-auto max-w-7xl px-5 sm:px-8">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Quem já usa"
-                title={
-                  <>
-                    Histórias de quem colocou <span className="text-info">em movimento.</span>
-                  </>
-                }
-                description="Negócios diferentes, mesma sensação: mais clareza para decidir e mais confiança para vender."
-              />
-            </div>
-            <div className="mt-14 grid gap-4 md:grid-cols-3">
-              {testimonials.map((testimonial, index) => (
-                <figure
-                  key={testimonial.name}
-                  data-reveal
-                  className="sales-reveal sales-card-hover flex flex-col rounded-3xl border bg-card p-6 shadow-sm"
-                  style={{ transitionDelay: `${index * 90}ms` }}
-                >
-                  <div className="flex gap-1 text-primary">
-                    {Array.from({ length: 5 }).map((_, star) => (
-                      <Star key={star} size={14} fill="currentColor" />
-                    ))}
-                  </div>
-                  <blockquote className="mt-5 flex-1 text-sm leading-relaxed text-foreground/80">
-                    &ldquo;{testimonial.quote}&rdquo;
-                  </blockquote>
-                  <figcaption className="mt-6 flex items-center gap-3 border-t pt-5">
-                    <span className="grid size-10 place-items-center rounded-full bg-info-soft text-xs font-extrabold text-info">
-                      {testimonial.initials}
-                    </span>
-                    <span>
-                      <span className="block text-sm font-bold">{testimonial.name}</span>
-                      <span className="block text-[11px] text-muted-foreground">
-                        {testimonial.role}
-                      </span>
-                    </span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-card/60 py-16 sm:py-20">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <div
-              data-reveal
-              className="sales-reveal flex flex-col items-start gap-6 rounded-[28px] border bg-background p-8 shadow-sm sm:flex-row sm:items-center sm:p-10"
-            >
-              <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-success-soft text-success">
-                <ShieldCheck size={26} />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                  Sem contrato. Sem fidelidade. Sem letra miúda.
+        <section id="recursos" className="sales-section scroll-mt-24">
+          <div className="sales-container">
+            <div className="grid gap-5 lg:grid-cols-2 lg:items-end">
+              <div>
+                <p className="sales-eyebrow">Menos pontas soltas</p>
+                <h2 className="sales-heading mt-3">
+                  Você já faz muita coisa.
+                  <br />
+                  Não precisa fazer tudo separado.
                 </h2>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  A assinatura é mensal e o pagamento é processado pelo Mercado Pago. Você gerencia
-                  ou cancela quando quiser, direto no checkout, sem precisar falar com ninguém.
-                </p>
               </div>
-              <div className="flex flex-wrap gap-2 text-[11px] font-bold text-muted-foreground">
-                <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
-                  <LockKeyhole size={13} className="text-info" /> Pagamento seguro
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
-                  <RefreshCcw size={13} className="text-info" /> Recorrência mensal
-                </span>
+              <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
+                O insumo está numa anotação. O preço, numa planilha. A venda, na conversa. A Mestrra
+                reúne essas informações para que uma etapa alimente a próxima.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-x-10 md:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature, index) => (
+                <article key={feature.title} className="border-t py-7">
+                  <div className="flex items-center justify-between">
+                    <feature.icon size={24} className="text-info" />
+                    <span className="text-xs text-muted-foreground">0{index + 1}</span>
+                  </div>
+                  <p className="mt-6 text-xs font-semibold text-muted-foreground">
+                    {feature.detail}
+                  </p>
+                  <h3 className="mt-2 text-lg leading-snug font-bold">{feature.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </article>
+              ))}
+              <div className="flex flex-col justify-center border-t py-7">
+                <p className="text-xl leading-snug font-bold">
+                  Conheça a rotina.
+                  <br />
+                  Antes de escolher o plano.
+                </p>
+                <Button asChild variant="link" className="mt-4 justify-start px-0 text-info">
+                  <Link to="/demo">
+                    Abrir demonstração <ArrowUpRight size={16} />
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-20 bg-secondary/40 py-24 sm:py-28">
-          <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
-            <div data-reveal className="sales-reveal">
-              <SectionHeading
-                eyebrow="Perguntas frequentes"
-                title={
-                  <>
-                    Tudo esclarecido<span className="text-info">.</span>
-                  </>
-                }
-                description="Se ficou alguma dúvida sobre a assinatura ou o funcionamento, a resposta está aqui."
-                align="left"
-              />
+        <section id="como-funciona" className="sales-section scroll-mt-24 border-y bg-card">
+          <div className="sales-container">
+            <p className="sales-eyebrow">Uma informação leva à próxima</p>
+            <h2 className="sales-heading mt-3">
+              Da primeira ficha técnica
+              <br />
+              ao resultado no caixa.
+            </h2>
+            <div className="mt-10 grid gap-8 md:grid-cols-3">
+              {[
+                {
+                  title: "Comece pelo que você faz",
+                  text: "Cadastre os insumos e as ofertas do seu negócio. Informe o tempo, os materiais e os custos envolvidos.",
+                },
+                {
+                  title: "Defina preço e prepare a oferta",
+                  text: "Simule a margem, salve seu preço e use os benefícios cadastrados para preparar posts e mensagens.",
+                },
+                {
+                  title: "Registre a venda. Veja o resultado.",
+                  text: "Acompanhe pedidos, materiais consumidos e movimentações do caixa. Use os números para planejar a próxima venda.",
+                },
+              ].map((step, index) => (
+                <div key={step.title} className="border-t pt-5">
+                  <span className="text-sm font-bold text-info">0{index + 1}</span>
+                  <h3 className="mt-4 text-lg font-bold">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+                </div>
+              ))}
             </div>
-            <div className="space-y-3" data-reveal>
-              {faqs.map((faq, index) => (
-                <details
-                  key={faq.question}
-                  data-reveal
-                  open={index === 0}
-                  className="sales-reveal group rounded-2xl border bg-card p-5 shadow-sm"
-                  style={{ transitionDelay: `${index * 60}ms` }}
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold">
-                    {faq.question}
-                    <ChevronDown
-                      size={17}
-                      className="shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180"
-                    />
-                  </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
-                </details>
+            <div className="mt-12 flex items-center justify-between gap-4 border-t pt-6">
+              <p className="text-xs text-muted-foreground">
+                Painel Mestrra · Negócio de demonstração, com dados de exemplo
+              </p>
+              <Button variant="link" asChild className="shrink-0 px-0 text-info">
+                <Link to="/demo">
+                  Explorar <ArrowUpRight size={15} />
+                </Link>
+              </Button>
+            </div>
+            <Link
+              to="/demo"
+              aria-label="Abrir demonstração do painel Mestrra"
+              className="mt-5 block overflow-hidden rounded-xl border"
+            >
+              <img
+                src={workspace.url}
+                alt="Demonstração do painel Mestrra: faturamento, despesas, lucro líquido, gráfico de caixa e últimas vendas."
+                width={1280}
+                height={950}
+                loading="lazy"
+                className="h-auto w-full"
+              />
+            </Link>
+          </div>
+        </section>
+
+        <section className="sales-section">
+          <div className="sales-container">
+            <p className="sales-eyebrow">Seu jeito de trabalhar, com mais clareza</p>
+            <h2 className="sales-heading mt-3">Produto, serviço ou os dois.</h2>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {routines.map((routine) => (
+                <article key={routine.title} className="border-t pt-6">
+                  <h3 className="text-lg font-bold">{routine.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {routine.description}
+                  </p>
+                  <p className="mt-5 text-xs font-semibold text-info">{routine.example}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-brand py-20 text-white">
-          <div className="sales-orb sales-orb-two pointer-events-none absolute -top-24 left-1/4 size-80 rounded-full bg-primary/20 blur-3xl" />
-          <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
-            <h2 className="text-3xl leading-tight font-extrabold sm:text-5xl">
-              Seu próximo passo começa <span className="text-primary">agora.</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
-              Entre para a esteira que conecta o seu dia a dia e transforma decisão em movimento.
-            </p>
-            <a
-              href="#precos"
-              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-7 text-sm font-bold text-primary-foreground shadow-xl shadow-primary/25 transition hover:scale-[1.03]"
-            >
-              Assinar por {money(SUBSCRIPTION_PRICE)}/mês <ArrowRight size={17} />
-            </a>
-            <p className="mt-4 flex items-center justify-center gap-2 text-xs text-white/40">
-              <MessageCircle size={14} /> Sem contrato · Cancele quando quiser
-            </p>
+        <section id="precos" className="sales-section scroll-mt-24 border-y bg-info-soft/40">
+          <div className="sales-container">
+            <div className="max-w-2xl">
+              <p className="sales-eyebrow">Investimento no seu negócio</p>
+              <h2 className="sales-heading mt-3">
+                Um plano completo.
+                <br />
+                Uma mensalidade clara.
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                Da organização dos insumos ao acompanhamento do caixa, sem precisar escolher quais
+                etapas ficam de fora.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+              <div className="pt-3">
+                <h3 className="text-lg font-bold">O que faz parte da sua assinatura</h3>
+                <div className="mt-6 divide-y border-y">
+                  {features.map((feature) => (
+                    <div key={feature.detail} className="flex gap-4 py-4">
+                      <Check size={18} className="mt-0.5 shrink-0 text-info" />
+                      <div>
+                        <p className="text-sm font-bold">{feature.detail}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <RefreshCcw size={14} className="shrink-0" />
+                  Atualizações da plataforma incluídas na assinatura.
+                </p>
+              </div>
+              <article className="self-start overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <div className="border-b bg-brand px-7 py-6 text-brand-foreground">
+                  <p className="text-xs font-semibold text-brand-foreground/70">
+                    ASSINATURA MENSAL
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold">Mestrra completa</h3>
+                </div>
+                <div className="p-7 sm:p-8">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-4xl font-extrabold sm:text-5xl">
+                      {money(SUBSCRIPTION_PRICE)}
+                    </span>
+                    <span className="text-sm text-muted-foreground">/mês</span>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Cobrança recorrente mensal. Sem fidelidade.
+                  </p>
+                  <div className="my-6 border-t" />
+                  <CheckoutForm />
+                  <div className="mt-6 border-t pt-5">
+                    <p className="flex items-center gap-2 text-xs font-semibold">
+                      <ShieldCheck size={16} className="text-info" />
+                      Pagamento processado pelo Mercado Pago
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                      As tarifas do Mercado Pago sobre cobranças aos seus clientes são separadas da
+                      mensalidade Mestrra.
+                    </p>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <div className="mt-10 flex flex-col justify-between gap-4 border-t border-info/20 pt-6 sm:flex-row sm:items-center">
+              <p className="text-sm text-muted-foreground">
+                Quer ver a Mestrra por dentro antes de assinar?
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/demo">
+                  Conhecer com dados de exemplo <ArrowUpRight size={16} />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section id="faq" className="sales-section scroll-mt-24 bg-card">
+          <div className="sales-container grid items-start gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <div className="lg:sticky lg:top-28">
+              <p className="sales-eyebrow">Antes de decidir</p>
+              <h2 className="sales-heading mt-3">
+                Dúvidas reais.
+                <br />
+                Respostas diretas.
+              </h2>
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                Como o preço é calculado, o que acontece com o estoque e quais custos entram na
+                assinatura. Sem promessas vagas.
+              </p>
+              <Button asChild variant="link" className="mt-5 px-0 text-info">
+                <Link to="/demo">
+                  Tire suas próprias conclusões <ArrowUpRight size={16} />
+                </Link>
+              </Button>
+            </div>
+            <Accordion type="single" collapsible defaultValue="faq-0" className="border-t">
+              {faqs.map((faq, index) => (
+                <AccordionItem key={faq.question} value={`faq-${index}`}>
+                  <AccordionTrigger className="gap-5 py-6 hover:no-underline">
+                    <span>
+                      <span className="mb-2 block text-[11px] font-semibold text-info">
+                        {faq.group}
+                      </span>
+                      <span className="block text-base leading-snug font-semibold">
+                        {faq.question}
+                      </span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="max-w-xl pr-6 pb-6 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </section>
+
+        <section className="bg-brand py-16 text-brand-foreground sm:py-20">
+          <div className="sales-container flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
+            <div>
+              <p className="text-xs font-semibold text-info">SEU PRÓXIMO PASSO</p>
+              <h2 className="mt-3 text-3xl leading-tight font-bold sm:text-4xl">
+                O negócio é seu.
+                <br />
+                Os números também precisam ser.
+              </h2>
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-foreground/70">
+                Conheça a Mestrra e encontre uma forma mais conectada de organizar, precificar e
+                acompanhar suas vendas.
+              </p>
+            </div>
+            <div className="flex w-full shrink-0 flex-col gap-3 lg:w-auto">
+              <Button asChild className="h-12 px-7">
+                <a href="#precos">
+                  Conhecer o plano de {money(SUBSCRIPTION_PRICE)}/mês <ArrowRight size={16} />
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="text-brand-foreground hover:bg-brand-foreground/10 hover:text-brand-foreground"
+              >
+                <Link to="/demo">Prefiro explorar a demonstração</Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
-
       <footer className="border-t bg-card py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 text-xs text-muted-foreground sm:flex-row sm:px-8">
+        <div className="sales-container flex flex-col items-start justify-between gap-5 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <Brand />
-          <p>Mestrra · Seu negócio em movimento.</p>
-          <p>Assinatura mensal processada pelo Mercado Pago.</p>
+          <p>Gestão para quem faz o negócio acontecer.</p>
+          <Link to="/auth" search={{ mode: "login" }} className="hover:text-foreground">
+            Já sou cliente <ArrowUpRight size={12} className="ml-1 inline" />
+          </Link>
         </div>
       </footer>
     </div>

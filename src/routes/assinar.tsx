@@ -6,8 +6,8 @@ import { routeMeta } from "@/lib/mestrra";
 export const Route = createFileRoute("/assinar")({
   head: () =>
     routeMeta(
-      "Assine a Mestrra",
-      "Assinatura mensal da Mestrra por R$ 127: estoque, precificação, marketing, vendas e caixa em uma só esteira.",
+      "Plano mensal completo",
+      "Conheça o plano completo da Mestrra por R$ 127/mês: estoque, precificação, marketing, vendas e caixa. Veja o que está incluído e tire suas dúvidas.",
     ),
   component: SalesPage,
 });

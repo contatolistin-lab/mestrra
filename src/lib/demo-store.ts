@@ -14,6 +14,10 @@ export function resetDemoData(): BusinessData {
 
 export function applyDemoSale(input: { itemId: string; quantity: number }): string {
   const recipes = state.recipes.filter((row) => row.catalog_item_id === input.itemId);
+  const catalogItem = state.catalog.find((entry) => entry.id === input.itemId);
+  if (catalogItem?.item_type === "produto" && !recipes.length) {
+    throw new Error("Este produto ainda não está vinculado ao estoque.");
+  }
   for (const recipe of recipes) {
     const item = state.inventory.find((entry) => entry.id === recipe.inventory_item_id);
     if (!item || item.current_stock < recipe.quantity_used * input.quantity) {

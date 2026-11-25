@@ -152,7 +152,17 @@ export function Pricing({ data }: { data: BusinessData }) {
     toast.success(keystoneRule(calc.cost).description);
   }
 
-  function prepareResale(item: BusinessData["inventory"][number], meta: RetailMeta | undefined) {
+  function prepareResale(
+    item: BusinessData["inventory"][number],
+    meta: RetailMeta | undefined,
+    catalogItem: BusinessData["catalog"][number] | undefined,
+  ) {
+    if (catalogItem) {
+      editItem(catalogItem);
+      if (retailLabel(meta)) setDescription(retailLabel(meta));
+      toast.success("Produto existente carregado. Ajuste e salve para atualizar o preço.");
+      return;
+    }
     reset("produto");
     setName(item.name);
     setDescription(retailLabel(meta) || "Produto pronto para revenda");
@@ -226,6 +236,10 @@ export function Pricing({ data }: { data: BusinessData }) {
   }
 
   async function save(goToCopiloto: boolean) {
+    if (mode === "produto" && !recipes.length) {
+      toast.error("Para vender um produto, vincule pelo menos 1 item do estoque na ficha técnica.");
+      return;
+    }
     const error = pricingError({
       name,
       totalMinutes,

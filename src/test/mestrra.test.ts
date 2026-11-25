@@ -86,4 +86,10 @@ describe("mestrra business rules", () => {
       demoSupabase.rpc("create_sale", { p_item: "demo-brownie", p_quantity: 100 }),
     ).rejects.toThrow("Estoque insuficiente");
   });
+
+  it("blocks demo product sales without a stock link", async () => {
+    await expect(
+      demoSupabase.rpc("create_sale", { p_item: "demo-brigadeiro", p_quantity: 1 }),
+    ).rejects.toThrow("vinculado ao estoque");
+  });
 });

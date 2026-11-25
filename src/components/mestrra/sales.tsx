@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
+import { isDemoMode } from "@/lib/demo-mode";
 import { resolvePriceBand, useManagementState, type Quote } from "@/lib/management";
 import { money, phoneMask, shortDate } from "@/lib/mestrra";
 import { requiredStock, stockShortageMessage } from "@/lib/stock";
@@ -96,6 +97,15 @@ export function Sales({
       toast.error("Escolha um produto ou serviço do catálogo.");
       return false;
     }
+    if (
+      item.item_type === "produto" &&
+      !data.recipes.some((recipe) => recipe.catalog_item_id === item.id)
+    ) {
+      toast.error(
+        "Este produto ainda não está vinculado ao estoque. Volte à Precificação e salve-o com um item do estoque.",
+      );
+      return false;
+    }
     if (!customer.trim()) {
       toast.error("Informe o nome do cliente.");
       return false;
@@ -135,17 +145,34 @@ export function Sales({
     if (message) throw new Error(message);
   }
 
-  async function createOrder(paymentMethod: string) {
+  async function createOrder(paymentMethod: string, finalUnitPrice: number) {
     await assertFreshStock();
-    const { data: orderId, error } = await supabase.rpc("create_sale", {
-      p_item: itemId,
-      p_customer: customer.trim(),
-      p_whatsapp: phoneMask(whatsapp),
-      p_quantity: quantity,
-      p_promo: promo,
-      p_method: paymentMethod,
+    if (isDemoMode) {
+      const { data: orderId, error } = await supabase.rpc("create_sale", {
+        p_item: itemId,
+        p_customer: customer.trim(),
+        p_whatsapp: phoneMask(whatsapp),
+        p_quantity: quantity,
+        p_promo: promo,
+        p_method: paymentMethod,
+      });
+      if (error) throw error;
+      return String(orderId);
+    }
+    const { data, error } = await supabase.functions.invoke("create-order", {
+      body: {
+        itemId,
+        customer: customer.trim(),
+        whatsapp: phoneMask(whatsapp),
+        quantity,
+        unitPrice: finalUnitPrice,
+        promo,
+        method: paymentMethod,
+      },
     });
     if (error) throw error;
+    const orderId = data?.orderId ?? data?.id;
+    if (!orderId) throw new Error("O servidor não retornou o número do pedido.");
     return String(orderId);
   }
 
@@ -153,7 +180,7 @@ export function Sales({
     if (!valid()) return;
     setBusy(true);
     try {
-      await createOrder(method);
+      await createOrder(method, unitPrice);
       await client.invalidateQueries({ queryKey: ["business"] });
       toast.success(
         `Venda confirmada! Estoque abatido automaticamente e ${money(total)} lançados no seu caixa.`,
@@ -172,7 +199,7 @@ export function Sales({
     if (!valid()) return;
     setBusy(true);
     try {
-      const orderId = await createOrder("mp_checkout_pro");
+      const orderId = await createOrder("mp_checkout_pro", unitPrice);
       const { data: result, error } = await supabase.functions.invoke("create-mp-preference", {
         body: { orderId },
       });

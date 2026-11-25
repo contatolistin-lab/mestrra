@@ -41,13 +41,18 @@ import { Field } from "./forms";
 import { toast } from "sonner";
 
 type InventoryRow = BusinessData["inventory"][number];
+type CatalogRow = BusinessData["catalog"][number];
 
 export function RetailPanel({
   data,
   onPrepare,
 }: {
   data: BusinessData;
-  onPrepare: (item: InventoryRow, meta: RetailMeta | undefined) => void;
+  onPrepare: (
+    item: InventoryRow,
+    meta: RetailMeta | undefined,
+    catalogItem: CatalogRow | undefined,
+  ) => void;
 }) {
   const { state } = useManagementState(data.userId);
   const items = data.inventory.filter((item) => item.category === "revenda");
@@ -75,6 +80,12 @@ export function RetailPanel({
           <tbody>
             {items.map((item) => {
               const meta = state.retail[item.id];
+              const catalogItem = data.catalog.find((entry) =>
+                data.recipes.some(
+                  (recipe) =>
+                    recipe.catalog_item_id === entry.id && recipe.inventory_item_id === item.id,
+                ),
+              );
               return (
                 <tr key={item.id}>
                   <td>
@@ -89,8 +100,12 @@ export function RetailPanel({
                     {meta?.salePrice ? money(meta.salePrice) : "A definir"}
                   </td>
                   <td>
-                    <Button variant="outline" size="sm" onClick={() => onPrepare(item, meta)}>
-                      Precificar
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onPrepare(item, meta, catalogItem)}
+                    >
+                      {catalogItem ? "Editar preço" : "Precificar"}
                     </Button>
                   </td>
                 </tr>
@@ -683,10 +698,18 @@ export function FiscalBackupPanel({ data }: { data: BusinessData }) {
   async function importBackup(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (
+      !window.confirm(
+        "Isso substitui as regras locais atuais por faixas, lotes, orçamentos e metadados do arquivo. Continuar?",
+      )
+    ) {
+      event.target.value = "";
+      return;
+    }
     try {
       const backup = parseBackup(await file.text());
       update(() => backup.management);
-      toast.success("Configurações, faixas, lotes e orçamentos restaurados.");
+      toast.success("Regras locais restauradas. Estoque, catálogo e pedidos não são alterados.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível ler o backup.");
     } finally {
@@ -776,17 +799,20 @@ export function FiscalBackupPanel({ data }: { data: BusinessData }) {
           <h2 className="section-heading">Backup e restauração</h2>
         </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Exporta um retrato do negócio e todas as regras locais em um único arquivo.
+          Exporta um retrato do negócio para conferência e todas as regras locais para restaurar.
         </p>
         <div className="mt-5 grid gap-3 text-[11px] text-muted-foreground">
           <p>{state.bands.length} faixa(s) de preço</p>
           <p>{state.batches.length} lote(s) de produção</p>
           <p>{state.quotes.length} orçamento(s)</p>
-          <p>Estoque, catálogo, pedidos e caixa também seguem no arquivo.</p>
+          <p>
+            Estoque, catálogo, pedidos e caixa seguem apenas como consulta; a restauração reaplica
+            regras e metadados locais.
+          </p>
         </div>
         <div className="mt-5 grid gap-2">
           <Button onClick={exportBackup}>
-            <Download size={15} /> Baixar backup completo
+            <Download size={15} /> Baixar arquivo do negócio
           </Button>
           <label className="native-select flex items-center justify-center gap-2 cursor-pointer">
             <Upload size={15} /> Restaurar configurações de um backup

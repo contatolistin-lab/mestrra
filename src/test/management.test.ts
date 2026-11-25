@@ -6,11 +6,15 @@ import {
   createQuote,
   defaultManagementState,
   keystoneRule,
+  normalizeManagementState,
   parseBackup,
   priceBandError,
   productionShortage,
   quoteTotal,
+  resaleMargin,
   resolvePriceBand,
+  retailLabel,
+  withRetailMeta,
   type PriceBand,
   type QuoteLine,
 } from "@/lib/management";
@@ -117,6 +121,26 @@ describe("management rules", () => {
     expect(quote.status).toBe("orcamento");
     expect(productionShortage(getDemoData(), "demo-brownie", 2)).toHaveLength(0);
     expect(productionShortage(getDemoData(), "demo-brownie", 100).length).toBeGreaterThan(0);
+  });
+
+  it("keeps resale metadata through backups and computes margin", () => {
+    const state = withRetailMeta(defaultManagementState(), "resale-item", {
+      sku: "CAM-M",
+      size: "M",
+      color: "Preto",
+      salePrice: 129.9,
+    });
+    expect(retailLabel(state.retail["resale-item"])).toBe("CAM-M · M · Preto");
+    expect(resaleMargin(60, 129.9, 6)).toBeCloseTo(47.81, 2);
+    expect(resaleMargin(60, 50, 6)).toBeNull();
+
+    const restored = parseBackup(JSON.stringify(createBackup(getDemoData(), state)));
+    expect(restored.management.retail["resale-item"]?.salePrice).toBe(129.9);
+    expect(
+      normalizeManagementState({
+        retail: { legacy: { sku: "ANTIGO", salePrice: "99" } },
+      }).retail["legacy"],
+    ).toMatchObject({ sku: "ANTIGO", salePrice: null });
   });
 
   it("round-trips a complete backup", () => {

@@ -8,6 +8,7 @@ import {
   ReceiptText,
   RotateCcw,
   Save,
+  ShoppingBag,
   Tags,
   Trash2,
   TriangleAlert,
@@ -26,16 +27,88 @@ import {
   priceBandError,
   productionShortage,
   quoteTotal,
+  retailLabel,
   resolvePriceBand,
   useManagementState,
   type FiscalSettings,
   type Quote,
   type QuoteRecurrence,
+  type RetailMeta,
 } from "@/lib/management";
 import { money, shortDate } from "@/lib/mestrra";
 import { requiredStock } from "@/lib/stock";
 import { Field } from "./forms";
 import { toast } from "sonner";
+
+type InventoryRow = BusinessData["inventory"][number];
+
+export function RetailPanel({
+  data,
+  onPrepare,
+}: {
+  data: BusinessData;
+  onPrepare: (item: InventoryRow, meta: RetailMeta | undefined) => void;
+}) {
+  const { state } = useManagementState(data.userId);
+  const items = data.inventory.filter((item) => item.category === "revenda");
+
+  return (
+    <section className="surface p-6">
+      <div className="flex items-center gap-2">
+        <ShoppingBag size={17} className="text-info" />
+        <h2 className="section-heading">Produtos da loja</h2>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        Roupas, acessórios e itens prontos: a precificação consome 1 unidade por venda.
+      </p>
+      <div className="mt-5 overflow-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>PRODUTO</th>
+              <th>ESTOQUE</th>
+              <th>CUSTO</th>
+              <th>PREÇO DE VENDA</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => {
+              const meta = state.retail[item.id];
+              return (
+                <tr key={item.id}>
+                  <td>
+                    <p className="text-[11px] font-semibold">{item.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {retailLabel(meta) || "Sem variação cadastrada"}
+                    </p>
+                  </td>
+                  <td className="text-[11px]">{item.current_stock} un</td>
+                  <td className="text-[11px]">{money(item.unit_cost_active ?? 0)}</td>
+                  <td className="text-[11px] font-semibold">
+                    {meta?.salePrice ? money(meta.salePrice) : "A definir"}
+                  </td>
+                  <td>
+                    <Button variant="outline" size="sm" onClick={() => onPrepare(item, meta)}>
+                      Precificar
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+            {!items.length && (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-[11px] text-muted-foreground">
+                  Cadastre produtos em Estoque da loja para vender sem ficha técnica.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 export function ProductionPanel({ data }: { data: BusinessData }) {
   const client = useQueryClient();

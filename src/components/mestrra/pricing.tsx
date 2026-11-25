@@ -20,12 +20,15 @@ import type { BusinessData } from "@/lib/business.functions";
 import {
   advancedPrice,
   keystoneRule,
+  resaleMargin,
+  retailLabel,
   useManagementState,
   type PriceCalculationMode,
+  type RetailMeta,
 } from "@/lib/management";
 import { money, priceCalculation, pricingError } from "@/lib/mestrra";
 import { toast } from "sonner";
-import { PriceBandsPanel, ProductionPanel } from "./management";
+import { PriceBandsPanel, ProductionPanel, RetailPanel } from "./management";
 
 type RecipeRow = { key: string; inventory_item_id: string; quantity_used: number };
 const emptyRecipe = (): RecipeRow => ({
@@ -113,6 +116,7 @@ export function Pricing({ data }: { data: BusinessData }) {
     const item = data.inventory.find((entry) => entry.id === row.inventory_item_id);
     return item && row.quantity_used > item.current_stock;
   });
+  const hasProduction = data.recipes.length > 0 || management.batches.length > 0;
 
   function reset(nextMode: "produto" | "servico" = mode) {
     setMode(nextMode);
@@ -146,6 +150,31 @@ export function Pricing({ data }: { data: BusinessData }) {
     setMarkup(100);
     setTax(0);
     toast.success(keystoneRule(calc.cost).description);
+  }
+
+  function prepareResale(item: BusinessData["inventory"][number], meta: RetailMeta | undefined) {
+    reset("produto");
+    setName(item.name);
+    setDescription(retailLabel(meta) || "Produto pronto para revenda");
+    setHourly(0);
+    setMinutes(0);
+    setFixed(0);
+    setTax(management.fiscal.defaultTaxPercent);
+    const cost = item.unit_cost_active ?? item.regular_price / (item.package_quantity || 1);
+    const margin = meta?.salePrice
+      ? resaleMargin(cost, meta.salePrice, management.fiscal.defaultTaxPercent)
+      : null;
+    changeCalculationMode("margem");
+    setMargin(margin ?? 50);
+    setRecipes([
+      { key: Math.random().toString(36).slice(2), inventory_item_id: item.id, quantity_used: 1 },
+    ]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.success(
+      margin !== null
+        ? "Produto carregado com o preço desejado. Confira e salve."
+        : "Produto carregado. Defina a margem e salve.",
+    );
   }
 
   function editItem(item: BusinessData["catalog"][number]) {
@@ -755,7 +784,8 @@ export function Pricing({ data }: { data: BusinessData }) {
           </section>
         </aside>
       </div>
-      <ProductionPanel data={data} />
+      <RetailPanel data={data} onPrepare={prepareResale} />
+      {hasProduction && <ProductionPanel data={data} />}
       <PriceBandsPanel data={data} />
     </div>
   );

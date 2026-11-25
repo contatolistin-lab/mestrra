@@ -56,12 +56,20 @@ export type Quote = {
   validUntil: string;
 };
 
+export type RetailMeta = {
+  sku: string;
+  size: string;
+  color: string;
+  salePrice: number | null;
+};
+
 export type ManagementState = {
   calculationMode: PriceCalculationMode;
   fiscal: FiscalSettings;
   bands: PriceBand[];
   batches: ProductionBatch[];
   quotes: Quote[];
+  retail: Record<string, RetailMeta>;
 };
 
 export type BackupPayload = {
@@ -84,6 +92,9 @@ const text = (value: unknown, fallback: string) =>
 const numeric = (value: unknown, fallback: number) =>
   typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
 
+const nullableAmount = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+
 export function defaultFiscalSettings(): FiscalSettings {
   return {
     regime: "simples_nacional",
@@ -102,6 +113,7 @@ export function defaultManagementState(): ManagementState {
     bands: [],
     batches: [],
     quotes: [],
+    retail: {},
   };
 }
 
@@ -125,6 +137,19 @@ export function normalizeManagementState(value: unknown): ManagementState {
   const bands = Array.isArray(record["bands"]) ? record["bands"] : [];
   const batches = Array.isArray(record["batches"]) ? record["batches"] : [];
   const quotes = Array.isArray(record["quotes"]) ? record["quotes"] : [];
+  const retail = isRecord(record["retail"]) ? record["retail"] : {};
+  const retailEntries = Object.entries(retail).map(([itemId, value]) => {
+    const meta = isRecord(value) ? value : {};
+    return [
+      itemId,
+      {
+        sku: text(meta["sku"], ""),
+        size: text(meta["size"], ""),
+        color: text(meta["color"], ""),
+        salePrice: nullableAmount(meta["salePrice"]),
+      },
+    ] as const;
+  });
   return {
     calculationMode: mode === "markup" ? "markup" : "margem",
     fiscal: normalizeFiscal(record["fiscal"]),
@@ -173,6 +198,7 @@ export function normalizeManagementState(value: unknown): ManagementState {
         validUntil: text(quote["validUntil"], new Date().toISOString()),
       };
     }),
+    retail: Object.fromEntries(retailEntries),
   };
 }
 
@@ -342,6 +368,30 @@ export function productionShortage(
 
 export function quoteTotal(lines: QuoteLine[]) {
   return lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+}
+
+export function retailLabel(meta: RetailMeta | undefined | null) {
+  return [meta?.sku, meta?.size, meta?.color].filter(Boolean).join(" · ");
+}
+
+export function resaleMargin(cost: number, salePrice: number, taxPercent: number) {
+  if (
+    !Number.isFinite(cost) ||
+    !Number.isFinite(salePrice) ||
+    !Number.isFinite(taxPercent) ||
+    cost < 0 ||
+    salePrice <= 0 ||
+    taxPercent >= 100
+  ) {
+    return null;
+  }
+  const margin = 100 * (1 - cost / salePrice - taxPercent / 100);
+  if (!Number.isFinite(margin) || margin < 0 || margin >= 100) return null;
+  return margin;
+}
+
+export function withRetailMeta(state: ManagementState, itemId: string, meta: RetailMeta) {
+  return { ...state, retail: { ...state.retail, [itemId]: meta } };
 }
 
 export function createQuote(

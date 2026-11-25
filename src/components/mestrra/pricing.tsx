@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,8 +17,15 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
+import {
+  advancedPrice,
+  keystoneRule,
+  useManagementState,
+  type PriceCalculationMode,
+} from "@/lib/management";
 import { money, priceCalculation, pricingError } from "@/lib/mestrra";
 import { toast } from "sonner";
+import { PriceBandsPanel, ProductionPanel } from "./management";
 
 type RecipeRow = { key: string; inventory_item_id: string; quantity_used: number };
 const emptyRecipe = (): RecipeRow => ({
@@ -31,7 +38,11 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 export function Pricing({ data }: { data: BusinessData }) {
   const navigate = useNavigate();
   const client = useQueryClient();
+  const { state: management, update: updateManagement } = useManagementState(data.userId);
   const [mode, setMode] = useState<"produto" | "servico">("produto");
+  const [calculationMode, setCalculationMode] = useState<PriceCalculationMode>(
+    management.calculationMode,
+  );
   const [editing, setEditing] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -41,13 +52,18 @@ export function Pricing({ data }: { data: BusinessData }) {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(30);
   const [hourly, setHourly] = useState(data.profile?.hourly_rate || 31.25);
-  const [fixed, setFixed] = useState(10);
-  const [tax, setTax] = useState(4.99);
+  const [fixed, setFixed] = useState(management.fiscal.fixedCostPercent);
+  const [tax, setTax] = useState(management.fiscal.defaultTaxPercent);
   const [margin, setMargin] = useState(50);
+  const [markup, setMarkup] = useState(100);
   const [promo, setPromo] = useState(0);
   const [recipes, setRecipes] = useState<RecipeRow[]>([]);
   const [picker, setPicker] = useState(emptyRecipe());
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setCalculationMode(management.calculationMode);
+  }, [management.calculationMode]);
 
   const totalMinutes = hours * 60 + minutes;
   const materials = useMemo(
@@ -61,7 +77,28 @@ export function Pricing({ data }: { data: BusinessData }) {
       }, 0),
     [recipes, data.inventory],
   );
-  const calc = priceCalculation(materials, totalMinutes, hourly, fixed, tax, margin);
+  const base = priceCalculation(
+    materials,
+    totalMinutes,
+    hourly,
+    fixed,
+    tax,
+    calculationMode === "margem" ? margin : 0,
+  );
+  const advanced = advancedPrice({
+    mode: calculationMode,
+    cost: base.cost,
+    taxPercent: tax,
+    marginPercent: margin,
+    markupPercent: markup,
+  });
+  const calc = {
+    ...base,
+    price: advanced.price,
+    tax: advanced.tax,
+    profit: advanced.profit,
+    valid: base.valid && advanced.valid,
+  };
   const promoRisks = recipes.filter((row) => {
     const item = data.inventory.find((entry) => entry.id === row.inventory_item_id);
     return !!item?.is_promo_active && (item.unit_cost_regular ?? 0) > (item.unit_cost_active ?? 0);
@@ -87,12 +124,28 @@ export function Pricing({ data }: { data: BusinessData }) {
     setPain("");
     setHours(0);
     setMinutes(30);
-    setFixed(10);
-    setTax(4.99);
+    setFixed(management.fiscal.fixedCostPercent);
+    setTax(
+      nextMode === "servico"
+        ? management.fiscal.serviceTaxPercent
+        : management.fiscal.defaultTaxPercent,
+    );
     setMargin(50);
     setPromo(0);
     setRecipes([]);
     setPicker(emptyRecipe());
+  }
+
+  function changeCalculationMode(next: PriceCalculationMode) {
+    setCalculationMode(next);
+    updateManagement((current) => ({ ...current, calculationMode: next }));
+  }
+
+  function applyKeystone() {
+    changeCalculationMode("markup");
+    setMarkup(100);
+    setTax(0);
+    toast.success(keystoneRule(calc.cost).description);
   }
 
   function editItem(item: BusinessData["catalog"][number]) {
@@ -150,7 +203,7 @@ export function Pricing({ data }: { data: BusinessData }) {
       hourly,
       fixedPercent: fixed,
       taxPercent: tax,
-      margin,
+      margin: calculationMode === "markup" ? advanced.effectiveMargin : margin,
       promo,
       cost: calc.cost,
       price: calc.price,
@@ -175,7 +228,9 @@ export function Pricing({ data }: { data: BusinessData }) {
       materials_cost: round2(materials),
       fixed_cost_allocation: round2(calc.fixed),
       total_unit_cost: round2(calc.cost),
-      desired_margin_percent: margin,
+      desired_margin_percent: round2(
+        calculationMode === "markup" ? advanced.effectiveMargin : margin,
+      ),
       platform_tax_percent: tax,
       suggested_price: round2(calc.price),
       promo_sale_price: promo > 0 ? round2(promo) : null,
@@ -501,6 +556,26 @@ export function Pricing({ data }: { data: BusinessData }) {
 
           <div className="rounded-xl border bg-background p-4 space-y-5">
             <p className="text-sm font-semibold">Simulador financeiro</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="field max-w-xs">
+                Regra de cálculo
+                <select
+                  value={calculationMode}
+                  onChange={(event) =>
+                    changeCalculationMode(event.target.value as PriceCalculationMode)
+                  }
+                >
+                  <option value="margem">Margem sobre a venda</option>
+                  <option value="markup">Markup sobre o custo</option>
+                </select>
+              </label>
+              <Button variant="outline" onClick={applyKeystone}>
+                Aplicar regra 2x
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {keystoneRule(calc.cost).description}
+            </p>
             {[
               {
                 label: "Rateio de custos fixos",
@@ -512,14 +587,25 @@ export function Pricing({ data }: { data: BusinessData }) {
                 label: "Taxas e impostos",
                 value: tax,
                 set: setTax,
-                hint: "Checkout Pro e impostos do MEI",
+                hint: "Checkout Pro e impostos do negócio",
               },
-              {
-                label: "Margem líquida desejada",
-                value: margin,
-                set: setMargin,
-                hint: "Lucro real que você quer por venda",
-              },
+              ...(calculationMode === "margem"
+                ? [
+                    {
+                      label: "Margem líquida desejada",
+                      value: margin,
+                      set: setMargin,
+                      hint: "Lucro real que você quer por venda",
+                    },
+                  ]
+                : [
+                    {
+                      label: "Markup sobre o custo",
+                      value: markup,
+                      set: setMarkup,
+                      hint: "Percentual aplicado sobre o custo total",
+                    },
+                  ]),
             ].map((slider) => (
               <div key={slider.label}>
                 <div className="flex justify-between text-[11px]">
@@ -531,7 +617,7 @@ export function Pricing({ data }: { data: BusinessData }) {
                 <Slider
                   className="mt-2"
                   min={0}
-                  max={100}
+                  max={200}
                   step={0.5}
                   value={[slider.value]}
                   onValueChange={([value]) => slider.set(value ?? 0)}
@@ -582,6 +668,12 @@ export function Pricing({ data }: { data: BusinessData }) {
                   </strong>
                 </div>
               ))}
+              {calculationMode === "markup" && (
+                <div className="flex justify-between gap-3 border-b border-brand-foreground/10 pb-2">
+                  <span className="text-brand-foreground/65">Margem efetiva</span>
+                  <strong>{advanced.effectiveMargin.toFixed(2).replace(".", ",")}%</strong>
+                </div>
+              )}
               {promo > 0 && (
                 <div className="flex justify-between gap-3 text-primary">
                   <span>Preço promocional</span>
@@ -591,7 +683,7 @@ export function Pricing({ data }: { data: BusinessData }) {
             </div>
             {!calc.valid && (
               <p className="mt-4 text-[11px] text-primary">
-                Taxas e margem somam 100% ou mais. Ajuste os sliders.
+                Ajuste taxas, margem ou markup para obter um preço válido.
               </p>
             )}
             <div className="mt-6 space-y-2">
@@ -663,6 +755,8 @@ export function Pricing({ data }: { data: BusinessData }) {
           </section>
         </aside>
       </div>
+      <ProductionPanel data={data} />
+      <PriceBandsPanel data={data} />
     </div>
   );
 }

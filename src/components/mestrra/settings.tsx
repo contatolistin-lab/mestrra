@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/resolved-client";
 import { toast } from "sonner";
 import type { BusinessData } from "@/lib/business.functions";
 import { ProfileForm } from "./forms";
+import { FiscalBackupPanel } from "./management";
 
 export function SettingsPanel({ data }: { data: BusinessData }) {
   const [connecting, setConnecting] = useState(false);
@@ -120,6 +121,7 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
           </div>
         </section>
       </div>
+      <FiscalBackupPanel data={data} />
     </div>
   );
 }

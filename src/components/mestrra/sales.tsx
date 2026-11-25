@@ -17,9 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
+import { resolvePriceBand, useManagementState, type Quote } from "@/lib/management";
 import { money, phoneMask, shortDate } from "@/lib/mestrra";
 import { requiredStock, stockShortageMessage } from "@/lib/stock";
 import { toast } from "sonner";
+import { QuotePanel } from "./management";
 
 export function Sales({
   data,
@@ -29,6 +31,7 @@ export function Sales({
   initialItemId: string | undefined;
 }) {
   const client = useQueryClient();
+  const { state: management } = useManagementState(data.userId);
   const [itemId, setItemId] = useState(
     initialItemId && data.catalog.some((item) => item.id === initialItemId) ? initialItemId : "",
   );
@@ -50,11 +53,13 @@ export function Sales({
   const [filter, setFilter] = useState("all");
 
   const item = data.catalog.find((entry) => entry.id === itemId);
-  const unitPrice = item
-    ? promo && item.promo_sale_price
-      ? item.promo_sale_price
-      : item.suggested_price
-    : 0;
+  const priceBand = resolvePriceBand(
+    management.bands,
+    itemId,
+    quantity,
+    item ? (promo && item.promo_sale_price ? item.promo_sale_price : item.suggested_price) : 0,
+  );
+  const unitPrice = priceBand.price;
   const total = unitPrice * quantity;
   const shortage = useMemo(
     () =>
@@ -189,6 +194,18 @@ export function Sales({
     return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
   }
 
+  function loadQuote(quote: Quote) {
+    const line = quote.lines[0];
+    if (!line) return;
+    setItemId(line.catalogItemId);
+    setQuantity(line.quantity);
+    setCustomer(quote.customer);
+    setWhatsapp(quote.phone);
+    setPromo(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.success("Orçamento carregado na cobrança rápida.");
+  }
+
   const orders = data.orders.filter((order) => filter === "all" || order.status === filter);
 
   return (
@@ -288,6 +305,7 @@ export function Sales({
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   {quantity} × {money(unitPrice)}
                   {promo ? " (promocional)" : ""}
+                  {priceBand.label ? ` · faixa ${priceBand.label}` : ""}
                 </p>
               </div>
               <div className="text-right text-[10px] text-muted-foreground">
@@ -387,6 +405,8 @@ export function Sales({
           </div>
         </aside>
       </div>
+
+      <QuotePanel data={data} onLoadQuote={loadQuote} />
 
       {checkout && (
         <section className="surface p-6">

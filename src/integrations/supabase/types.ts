@@ -14,6 +14,131 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_allowlist: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
+      admin_metrics: {
+        Row: {
+          acquisition_spend: number
+          active_customers: number
+          cash_balance: number
+          churned_customers: number
+          churned_mrr: number
+          contraction_mrr: number
+          converted_trials: number
+          csat_average: number
+          dau: number
+          expansion_mrr: number
+          gross_margin_percent: number
+          mau: number
+          monthly_expenses: number
+          monthly_revenue: number
+          mrr: number
+          new_customers: number
+          nps_detractors: number
+          nps_passives: number
+          nps_promoters: number
+          period_end: string
+          period_label: string
+          period_start: string
+          previous_active_customers: number
+          previous_mrr: number
+          starting_mrr: number
+          trials: number
+          ttv_days: number
+          updated_at: string
+          user_id: string
+          visitors: number
+        }
+        Insert: {
+          acquisition_spend?: number
+          active_customers?: number
+          cash_balance?: number
+          churned_customers?: number
+          churned_mrr?: number
+          contraction_mrr?: number
+          converted_trials?: number
+          csat_average?: number
+          dau?: number
+          expansion_mrr?: number
+          gross_margin_percent?: number
+          mau?: number
+          monthly_expenses?: number
+          monthly_revenue?: number
+          mrr?: number
+          new_customers?: number
+          nps_detractors?: number
+          nps_passives?: number
+          nps_promoters?: number
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          previous_active_customers?: number
+          previous_mrr?: number
+          starting_mrr?: number
+          trials?: number
+          ttv_days?: number
+          updated_at?: string
+          user_id: string
+          visitors?: number
+        }
+        Update: {
+          acquisition_spend?: number
+          active_customers?: number
+          cash_balance?: number
+          churned_customers?: number
+          churned_mrr?: number
+          contraction_mrr?: number
+          converted_trials?: number
+          csat_average?: number
+          dau?: number
+          expansion_mrr?: number
+          gross_margin_percent?: number
+          mau?: number
+          monthly_expenses?: number
+          monthly_revenue?: number
+          mrr?: number
+          new_customers?: number
+          nps_detractors?: number
+          nps_passives?: number
+          nps_promoters?: number
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          previous_active_customers?: number
+          previous_mrr?: number
+          starting_mrr?: number
+          trials?: number
+          ttv_days?: number
+          updated_at?: string
+          user_id?: string
+          visitors?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cashflow_transactions: {
         Row: {
           amount: number
@@ -49,6 +174,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cashflow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "admin_marketplace_sales"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cashflow_transactions_order_id_fkey"
             columns: ["order_id"]
@@ -382,6 +514,183 @@ export type Database = {
           },
         ]
       }
+      platform_admin_inputs: {
+        Row: {
+          acquisition_spend: number
+          cash_balance: number
+          contraction_mrr: number
+          converted_trials: number
+          csat_average: number
+          dau: number
+          expansion_mrr: number
+          gross_margin_percent: number
+          id: number
+          mau: number
+          monthly_expenses: number
+          monthly_revenue: number
+          nps_detractors: number
+          nps_passives: number
+          nps_promoters: number
+          period_end: string
+          period_label: string
+          period_start: string
+          trials: number
+          ttv_days: number
+          updated_at: string
+          visitors: number
+        }
+        Insert: {
+          acquisition_spend?: number
+          cash_balance?: number
+          contraction_mrr?: number
+          converted_trials?: number
+          csat_average?: number
+          dau?: number
+          expansion_mrr?: number
+          gross_margin_percent?: number
+          id?: number
+          mau?: number
+          monthly_expenses?: number
+          monthly_revenue?: number
+          nps_detractors?: number
+          nps_passives?: number
+          nps_promoters?: number
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          trials?: number
+          ttv_days?: number
+          updated_at?: string
+          visitors?: number
+        }
+        Update: {
+          acquisition_spend?: number
+          cash_balance?: number
+          contraction_mrr?: number
+          converted_trials?: number
+          csat_average?: number
+          dau?: number
+          expansion_mrr?: number
+          gross_margin_percent?: number
+          id?: number
+          mau?: number
+          monthly_expenses?: number
+          monthly_revenue?: number
+          nps_detractors?: number
+          nps_passives?: number
+          nps_promoters?: number
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          trials?: number
+          ttv_days?: number
+          updated_at?: string
+          visitors?: number
+        }
+        Relationships: []
+      }
+      platform_subscriptions: {
+        Row: {
+          activated_at: string | null
+          amount: number
+          cancelled_at: string | null
+          checkout_url: string | null
+          created_at: string
+          currency: string
+          email: string
+          external_reference: string
+          id: string
+          last_payment_at: string | null
+          last_webhook_at: string | null
+          payer_name: string | null
+          preapproval_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          amount?: number
+          cancelled_at?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          email: string
+          external_reference: string
+          id?: string
+          last_payment_at?: string | null
+          last_webhook_at?: string | null
+          payer_name?: string | null
+          preapproval_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          amount?: number
+          cancelled_at?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          email?: string
+          external_reference?: string
+          id?: string
+          last_payment_at?: string | null
+          last_webhook_at?: string | null
+          payer_name?: string | null
+          preapproval_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_bands: {
+        Row: {
+          catalog_item_id: string
+          id: string
+          label: string
+          max_quantity: number | null
+          min_quantity: number
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          id?: string
+          label: string
+          max_quantity?: number | null
+          min_quantity: number
+          price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          id?: string
+          label?: string
+          max_quantity?: number | null
+          min_quantity?: number
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_bands_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_bands_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           business_name: string | null
@@ -420,9 +729,81 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_marketplace_sales: {
+        Row: {
+          checkout_url: string | null
+          created_at: string | null
+          customer_name: string | null
+          id: string | null
+          item_name: string | null
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          quantity: number | null
+          status: string | null
+          total_amount: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_metrics_snapshot: {
+        Row: {
+          arpa: number | null
+          arr: number | null
+          burn_rate: number | null
+          cac: number | null
+          cac_payback_months: number | null
+          csat: number | null
+          customer_churn: number | null
+          dau: number | null
+          dau_mau: number | null
+          ltv: number | null
+          ltv_cac: number | null
+          mau: number | null
+          mrr: number | null
+          mrr_growth: number | null
+          nps: number | null
+          nrr: number | null
+          period_end: string | null
+          period_label: string | null
+          period_start: string | null
+          revenue_churn: number | null
+          runway_months: number | null
+          trial_to_customer: number | null
+          ttv_days: number | null
+          user_id: string | null
+          visitor_to_customer: number | null
+          visitor_to_trial: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      admin_marketplace_sales_summary: {
+        Args: never
+        Returns: {
+          cancelled: number
+          gross_paid: number
+          paid: number
+          pending: number
+          total: number
+        }[]
+      }
       create_sale: {
         Args: {
           p_customer: string
@@ -435,6 +816,15 @@ export type Database = {
         Returns: string
       }
       process_paid_order: { Args: { p_order_id: string }; Returns: undefined }
+      resolve_price_band: {
+        Args: {
+          p_catalog_item_id: string
+          p_default_price: number
+          p_quantity: number
+          p_user_id: string
+        }
+        Returns: number
+      }
       restock_item: {
         Args: {
           p_expense: boolean
@@ -444,6 +834,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      reverse_paid_order: { Args: { p_order_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -125,10 +125,7 @@ async function validSignature(req: Request, dataId: string) {
   return { ok: true, status: 200, reason: "" };
 }
 
-async function stockIsAvailable(
-  supabase: SupabaseClient,
-  order: OrderRow,
-) {
+async function stockIsAvailable(supabase: SupabaseClient, order: OrderRow) {
   const { data: item } = await supabase
     .from("catalog_items")
     .select("item_type")
@@ -169,10 +166,7 @@ async function stockIsAvailable(
   };
 }
 
-async function reversePaidOrder(
-  supabase: SupabaseClient,
-  order: OrderRow,
-) {
+async function reversePaidOrder(supabase: SupabaseClient, order: OrderRow) {
   const { data: recipes } = await supabase
     .from("catalog_recipes")
     .select("inventory_item_id,quantity_used")
@@ -263,7 +257,10 @@ Deno.serve(async (req: Request) => {
     );
 
     if (status === "approved" && order.status === "pending" && !order.stock_deducted) {
-      if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - Number(order.total_amount)) > 0.01) {
+      if (
+        !Number.isFinite(paidAmount) ||
+        Math.abs(paidAmount - Number(order.total_amount)) > 0.01
+      ) {
         return response({ received: false, reason: "Valor pago diverge do pedido" }, 400);
       }
       const stock = await stockIsAvailable(supabase, order as OrderRow);

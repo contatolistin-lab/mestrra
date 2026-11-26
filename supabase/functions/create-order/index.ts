@@ -30,7 +30,7 @@ const response = (payload: unknown, status = 200) =>
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  let applied: Requirement[] = [];
+  const applied: Requirement[] = [];
   let userId = "";
 
   try {
@@ -132,7 +132,10 @@ Deno.serve(async (req: Request) => {
       for (const row of requirements) {
         const { data: updated, error: updateError } = await supabase
           .from("inventory_items")
-          .update({ current_stock: row.available - row.needed, updated_at: new Date().toISOString() })
+          .update({
+            current_stock: row.available - row.needed,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", row.id)
           .eq("user_id", userId)
           .gte("current_stock", row.needed)

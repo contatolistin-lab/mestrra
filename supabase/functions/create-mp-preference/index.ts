@@ -55,9 +55,7 @@ async function validAccessToken(
     .update({
       access_token: refreshed.access_token,
       refresh_token: refreshed.refresh_token ?? connection.refresh_token,
-      expires_at: new Date(
-        Date.now() + Number(refreshed.expires_in || 3600) * 1000,
-      ).toISOString(),
+      expires_at: new Date(Date.now() + Number(refreshed.expires_in || 3600) * 1000).toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);

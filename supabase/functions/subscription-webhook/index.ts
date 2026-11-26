@@ -22,7 +22,8 @@ function constantTimeEquals(a: string, b: string) {
 }
 
 async function validSignature(req: Request, dataId: string) {
-  const secret = Deno.env.get("MP_SUBSCRIPTION_WEBHOOK_SECRET") ?? Deno.env.get("MP_WEBHOOK_SECRET");
+  const secret =
+    Deno.env.get("MP_SUBSCRIPTION_WEBHOOK_SECRET") ?? Deno.env.get("MP_WEBHOOK_SECRET");
   if (!secret) return { ok: false, status: 500, reason: "Segredo do webhook não configurado" };
 
   const parts = Object.fromEntries(

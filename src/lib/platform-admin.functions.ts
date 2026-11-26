@@ -26,6 +26,34 @@ async function requirePlatformAdmin(context: { userId: string }) {
   return { admin, email };
 }
 
+type AdminEmailInput = { email: string };
+
+export const isPlatformAdminEmailAllowed = createServerFn({ method: "POST" })
+  .validator((input: unknown): AdminEmailInput => {
+    const email =
+      typeof input === "object" &&
+      input !== null &&
+      "email" in input &&
+      typeof input.email === "string"
+        ? input.email.trim().toLowerCase()
+        : "";
+    return { email };
+  })
+  .handler(async ({ data }) => {
+    if (!data.email) return false;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as SupabaseClient;
+    const { data: allowed, error } = await admin
+      .from("admin_allowlist")
+      .select("email")
+      .eq("active", true)
+      .ilike("email", data.email)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return Boolean(allowed);
+  });
+
 export const checkPlatformAdminAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

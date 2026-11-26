@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import { routeMeta } from "@/lib/mestrra";
 import type { PlatformOverview } from "@/lib/platform-admin";
-import { checkPlatformAdminAccess, getPlatformOverview } from "@/lib/platform-admin.functions";
+import {
+  checkPlatformAdminAccess,
+  getPlatformOverview,
+  isPlatformAdminEmailAllowed,
+} from "@/lib/platform-admin.functions";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -116,20 +120,45 @@ function GestaoPlataformaPage() {
 }
 
 function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => void }) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
+    setNotice(null);
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "").trim();
     const password = String(form.get("password") || "");
     try {
+      if (mode === "signup") {
+        const allowed = await isPlatformAdminEmailAllowed({ data: { email } });
+        if (!allowed) throw new Error("Este e-mail não está liberado para a gestão da plataforma.");
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: new URL("/admin", window.location.origin).toString() },
+        });
+        if (error) throw error;
+        if (!data.session) {
+          setNotice(
+            "Se o e-mail ainda não estava cadastrado, confirme o link enviado. Se já estava, use Entrar com a senha existente.",
+          );
+          setMode("login");
+          toast.success("Verifique seu e-mail ou entre com a senha já cadastrada.");
+          return;
+        }
+        onSignedIn(data.session);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       onSignedIn(data.session);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível entrar.");
+      toast.error(error instanceof Error ? error.message : "Não foi possível continuar.");
     } finally {
       setBusy(false);
     }
@@ -155,10 +184,17 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
         <div className="icon-tile mb-6">
           <LockKeyhole size={20} />
         </div>
-        <h2 className="text-2xl font-extrabold">Acesso administrativo</h2>
+        <h2 className="text-2xl font-extrabold">
+          {mode === "signup" ? "Cadastrar acesso administrativo" : "Acesso administrativo"}
+        </h2>
         <p className="text-sm text-muted-foreground mt-3 mb-8">
-          Entre com o e-mail e a senha liberados para esta área.
+          {mode === "signup"
+            ? "Cadastre um e-mail liberado e defina a senha para entrar nesta área."
+            : "Entre com o e-mail e a senha liberados para esta área."}
         </p>
+        {notice ? (
+          <p className="mb-6 rounded-md bg-muted p-3 text-sm text-muted-foreground">{notice}</p>
+        ) : null}
         <form onSubmit={submit} className="space-y-5">
           <label className="field">
             E-mail
@@ -175,15 +211,26 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
             <input
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               minLength={8}
               required
             />
           </label>
           <Button disabled={busy} className="w-full h-11" type="submit">
-            {busy ? "Validando…" : "Entrar na gestão"} <ArrowRight size={16} />
+            {busy ? "Validando…" : mode === "signup" ? "Cadastrar e entrar" : "Entrar na gestão"}{" "}
+            <ArrowRight size={16} />
           </Button>
         </form>
+        <button
+          type="button"
+          className="mt-6 text-sm text-primary hover:underline"
+          onClick={() => {
+            setMode(mode === "login" ? "signup" : "login");
+            setNotice(null);
+          }}
+        >
+          {mode === "login" ? "Cadastrar e-mail administrativo" : "Já tenho acesso, entrar"}
+        </button>
       </section>
     </main>
   );

@@ -27,6 +27,7 @@ async function requirePlatformAdmin(context: { userId: string }) {
 }
 
 type AdminEmailInput = { email: string };
+type AdminCredentialsInput = { email: string; password: string };
 
 export const isPlatformAdminEmailAllowed = createServerFn({ method: "POST" })
   .validator((input: unknown): AdminEmailInput => {
@@ -52,6 +53,76 @@ export const isPlatformAdminEmailAllowed = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     return Boolean(allowed);
+  });
+
+export const ensurePlatformAdminUser = createServerFn({ method: "POST" })
+  .validator((input: unknown): AdminCredentialsInput => {
+    if (
+      typeof input !== "object" ||
+      input === null ||
+      !("email" in input) ||
+      !("password" in input) ||
+      typeof input.email !== "string" ||
+      typeof input.password !== "string"
+    ) {
+      throw new Error("E-mail e senha são obrigatórios.");
+    }
+    return {
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+    };
+  })
+  .handler(async ({ data }) => {
+    if (!data.email || data.password.length < 8) {
+      throw new Error("Informe um e-mail válido e uma senha com pelo menos 8 caracteres.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as SupabaseClient;
+    const { data: allowed, error: allowedError } = await admin
+      .from("admin_allowlist")
+      .select("email")
+      .eq("active", true)
+      .ilike("email", data.email)
+      .maybeSingle();
+    if (allowedError) throw new Error(allowedError.message);
+    if (!allowed) throw new Error("Este e-mail não está liberado para a gestão da plataforma.");
+
+    const created = await admin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+    });
+    if (!created.error && created.data.user) return true;
+
+    if (!/already registered|already been registered/i.test(created.error?.message ?? "")) {
+      throw created.error ?? new Error("Não foi possível criar o acesso administrativo.");
+    }
+
+    let existingId: string | null = null;
+    let page = 1;
+    while (!existingId) {
+      const { data: usersData, error: usersError } = await admin.auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+      if (usersError) throw usersError;
+      const found = usersData.users.find((user) => user.email?.trim().toLowerCase() === data.email);
+      if (found) {
+        existingId = found.id;
+        break;
+      }
+      if (usersData.users.length < 200) break;
+      page += 1;
+    }
+    if (!existingId) throw new Error("Este e-mail já está cadastrado. Use Entrar.");
+
+    const { error: updateError } = await admin.auth.admin.updateUserById(existingId, {
+      password: data.password,
+      email_confirm: true,
+    });
+    if (updateError) throw updateError;
+    return true;
   });
 
 export const checkPlatformAdminAccess = createServerFn({ method: "GET" })

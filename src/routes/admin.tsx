@@ -12,8 +12,8 @@ import { routeMeta } from "@/lib/mestrra";
 import type { PlatformOverview } from "@/lib/platform-admin";
 import {
   checkPlatformAdminAccess,
+  ensurePlatformAdminUser,
   getPlatformOverview,
-  isPlatformAdminEmailAllowed,
 } from "@/lib/platform-admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -162,26 +162,6 @@ function AdminLogin({
     }
   }
 
-  async function resendConfirmation() {
-    if (!formRef.current) return;
-    const email = String(new FormData(formRef.current).get("email") || "").trim();
-    if (!email) {
-      showError("Informe o e-mail para reenviar a confirmação.");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.resend({ type: "signup", email });
-      if (error) throw error;
-      showSuccess("Reenviamos o link de confirmação. Verifique a caixa de entrada e o spam.");
-    } catch (error) {
-      showError(describeAuthError(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -191,35 +171,9 @@ function AdminLogin({
     const password = String(form.get("password") || "");
     try {
       if (mode === "signup") {
-        let allowed = false;
-        try {
-          allowed = await isPlatformAdminEmailAllowed({ data: { email } });
-        } catch {
-          throw new Error(
-            "Não foi possível validar a allowlist administrativa. Confira o SQL aplicado.",
-          );
-        }
-        if (!allowed) {
-          showError("Este e-mail não está liberado para a gestão da plataforma.");
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-          if (/already registered|already been registered/i.test(error.message)) {
-            setMode("login");
-            showError("Este e-mail já está cadastrado. Use Entrar ou recupere a senha.");
-            return;
-          }
-          throw error;
-        }
-        if (!data.session) {
-          setMode("login");
-          showSuccess(
-            "Se o e-mail ainda não estava cadastrado, confirme o link enviado. Se já estava, use Entrar ou recupere a senha.",
-          );
-          return;
-        }
+        await ensurePlatformAdminUser({ data: { email, password } });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
         onSignedIn(data.session);
         return;
       }
@@ -292,24 +246,14 @@ function AdminLogin({
           </Button>
         </form>
         {mode === "login" ? (
-          <div className="mt-4 flex flex-col items-start gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              className="text-sm text-muted-foreground hover:underline"
-              onClick={recover}
-            >
-              Esqueci minha senha
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="text-sm text-muted-foreground hover:underline"
-              onClick={resendConfirmation}
-            >
-              Reenviar e-mail de confirmação
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={busy}
+            className="mt-4 text-sm text-muted-foreground hover:underline"
+            onClick={recover}
+          >
+            Esqueci minha senha
+          </button>
         ) : null}
         <button
           type="button"

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
 import { ArrowRight, LockKeyhole } from "lucide-react";
@@ -123,6 +123,27 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  async function recover() {
+    if (!formRef.current) return;
+    const email = String(new FormData(formRef.current).get("email") || "").trim();
+    if (!email) {
+      toast.error("Informe o e-mail para recuperar a senha.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      toast.success("Se o e-mail existir, enviaremos o link de recuperação.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível recuperar a senha.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -133,18 +154,29 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
     const password = String(form.get("password") || "");
     try {
       if (mode === "signup") {
-        const allowed = await isPlatformAdminEmailAllowed({ data: { email } });
+        let allowed = false;
+        try {
+          allowed = await isPlatformAdminEmailAllowed({ data: { email } });
+        } catch {
+          throw new Error(
+            "Não foi possível validar a allowlist administrativa. Confira o SQL aplicado.",
+          );
+        }
         if (!allowed) throw new Error("Este e-mail não está liberado para a gestão da plataforma.");
 
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: new URL("/admin", window.location.origin).toString() },
-        });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          if (/already registered|already been registered/i.test(error.message)) {
+            setNotice("Este e-mail já está cadastrado. Use Entrar ou recupere a senha.");
+            setMode("login");
+            toast.error("Este e-mail já está cadastrado. Use Entrar.");
+            return;
+          }
+          throw error;
+        }
         if (!data.session) {
           setNotice(
-            "Se o e-mail ainda não estava cadastrado, confirme o link enviado. Se já estava, use Entrar com a senha existente.",
+            "Se o e-mail ainda não estava cadastrado, confirme o link enviado. Se já estava, use Entrar ou recupere a senha.",
           );
           setMode("login");
           toast.success("Verifique seu e-mail ou entre com a senha já cadastrada.");
@@ -195,7 +227,7 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
         {notice ? (
           <p className="mb-6 rounded-md bg-muted p-3 text-sm text-muted-foreground">{notice}</p>
         ) : null}
-        <form onSubmit={submit} className="space-y-5">
+        <form ref={formRef} onSubmit={submit} className="space-y-5">
           <label className="field">
             E-mail
             <input
@@ -221,6 +253,16 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => v
             <ArrowRight size={16} />
           </Button>
         </form>
+        {mode === "login" ? (
+          <button
+            type="button"
+            disabled={busy}
+            className="mt-4 text-sm text-muted-foreground hover:underline"
+            onClick={recover}
+          >
+            Esqueci minha senha
+          </button>
+        ) : null}
         <button
           type="button"
           className="mt-6 text-sm text-primary hover:underline"

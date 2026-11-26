@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as MpCallbackRouteImport } from './routes/mp-callback'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCopilotoRouteImport } from './routes/_authenticated/copiloto'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -57,6 +58,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/copiloto': typeof AuthenticatedCopilotoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/copiloto': typeof AuthenticatedCopilotoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/copiloto': typeof AuthenticatedCopilotoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/mp-callback'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/copiloto'
     | '/dashboard'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/mp-callback'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/copiloto'
     | '/dashboard'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/mp-callback'
     | '/reset-password'
+    | '/_authenticated/admin'
     | '/_authenticated/configuracoes'
     | '/_authenticated/copiloto'
     | '/_authenticated/dashboard'
@@ -241,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -287,6 +306,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedCopilotoRoute: typeof AuthenticatedCopilotoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -296,6 +316,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedCopilotoRoute: AuthenticatedCopilotoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,

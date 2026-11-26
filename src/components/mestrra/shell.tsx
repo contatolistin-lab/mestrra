@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
+  BarChart3,
   Package,
   Calculator,
   Sparkles,
@@ -31,6 +32,7 @@ const navigation = [
   { to: "/precificacao", label: "Precificação inteligente", icon: Calculator },
   { to: "/copiloto", label: "Copiloto de marketing", icon: Sparkles },
   { to: "/vendas", label: "Vendas & cobranças", icon: ShoppingBag },
+  { to: "/admin", label: "Admin", icon: BarChart3 },
 ] as const;
 const steps = [
   { to: "/estoque", label: "Estoque & recursos" },
@@ -333,7 +335,9 @@ export function Shell({
                   ? "Preços"
                   : n.to === "/copiloto"
                     ? "Copiloto"
-                    : "Vendas"}
+                    : n.to === "/vendas"
+                      ? "Vendas"
+                      : "Admin"}
           </Link>
         ))}
       </nav>

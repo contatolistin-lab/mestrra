@@ -12,7 +12,7 @@ import { routeMeta } from "@/lib/mestrra";
 import type { PlatformOverview } from "@/lib/platform-admin";
 import { checkPlatformAdminAccess, getPlatformOverview } from "@/lib/platform-admin.functions";
 
-export const Route = createFileRoute("/gestao-plataforma")({
+export const Route = createFileRoute("/admin")({
   ssr: false,
   head: () =>
     routeMeta(

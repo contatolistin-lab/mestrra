@@ -31,10 +31,10 @@ describe("App routing", () => {
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
 
-  it("matches the restricted platform page for /gestao-plataforma", () => {
+  it("matches the restricted platform page for /admin", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
 
-    const matches = router.matchRoutes("/gestao-plataforma");
+    const matches = router.matchRoutes("/admin");
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });

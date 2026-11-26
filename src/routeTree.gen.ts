@@ -11,10 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AssinarRouteImport } from './routes/assinar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
-import { Route as GestaoPlataformaRouteImport } from './routes/gestao-plataforma'
 import { Route as MpCallbackRouteImport } from './routes/mp-callback'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
@@ -33,6 +33,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssinarRoute = AssinarRouteImport.update({
   id: '/assinar',
   path: '/assinar',
@@ -46,11 +51,6 @@ const AuthRoute = AuthRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GestaoPlataformaRoute = GestaoPlataformaRouteImport.update({
-  id: '/gestao-plataforma',
-  path: '/gestao-plataforma',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MpCallbackRoute = MpCallbackRouteImport.update({
@@ -98,10 +98,10 @@ const AuthenticatedVendasRoute = AuthenticatedVendasRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
-  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -113,10 +113,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
-  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -130,10 +130,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
-  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -147,10 +147,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/assinar'
     | '/auth'
     | '/demo'
-    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
     | '/configuracoes'
@@ -162,10 +162,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/assinar'
     | '/auth'
     | '/demo'
-    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
     | '/configuracoes'
@@ -178,10 +178,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/assinar'
     | '/auth'
     | '/demo'
-    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
     | '/_authenticated/configuracoes'
@@ -195,10 +195,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AssinarRoute: typeof AssinarRoute
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
-  GestaoPlataformaRoute: typeof GestaoPlataformaRoute
   MpCallbackRoute: typeof MpCallbackRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
 }
@@ -217,6 +217,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assinar': {
@@ -238,13 +245,6 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gestao-plataforma': {
-      id: '/gestao-plataforma'
-      path: '/gestao-plataforma'
-      fullPath: '/gestao-plataforma'
-      preLoaderRoute: typeof GestaoPlataformaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mp-callback': {
@@ -330,10 +330,10 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRoute: AdminRoute,
   AssinarRoute: AssinarRoute,
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
-  GestaoPlataformaRoute: GestaoPlataformaRoute,
   MpCallbackRoute: MpCallbackRoute,
   ResetPasswordRoute: ResetPasswordRoute,
 }

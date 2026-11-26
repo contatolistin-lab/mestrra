@@ -128,6 +128,34 @@ export const ensurePlatformAdminUser = createServerFn({ method: "POST" })
     return true;
   });
 
+export const getPlatformAdminDiagnostics = createServerFn({ method: "GET" }).handler(async () => {
+  const hasEnv = Boolean(process.env["SUPABASE_URL"] && process.env["SUPABASE_SERVICE_ROLE_KEY"]);
+  if (!hasEnv) {
+    return {
+      env: false,
+      allowlist: "variáveis ausentes",
+      subscriptions: "variáveis ausentes",
+      inputs: "variáveis ausentes",
+      profiles: "variáveis ausentes",
+    };
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as unknown as SupabaseClient;
+  const check = async (table: string) => {
+    const { error } = await admin.from(table).select("*").limit(1);
+    return error ? `ERRO: ${error.message}` : "OK";
+  };
+
+  return {
+    env: true,
+    allowlist: await check("admin_allowlist"),
+    subscriptions: await check("platform_subscriptions"),
+    inputs: await check("platform_admin_inputs"),
+    profiles: await check("profiles"),
+  };
+});
+
 export const checkPlatformAdminAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

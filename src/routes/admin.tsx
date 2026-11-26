@@ -10,11 +10,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import { routeMeta } from "@/lib/mestrra";
 import type { PlatformOverview } from "@/lib/platform-admin";
-import {
-  checkPlatformAdminAccess,
-  ensurePlatformAdminUser,
-  getPlatformOverview,
-} from "@/lib/platform-admin.functions";
+import { ensurePlatformAdminUser, getPlatformOverview } from "@/lib/platform-admin.functions";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -28,11 +24,21 @@ export const Route = createFileRoute("/admin")({
 
 type AccessState = "checking" | "login" | "verifying" | "ready";
 
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
 function GestaoPlataformaPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<AccessState>("checking");
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
+  const [validationStep, setValidationStep] = useState("permissão");
 
   const loadOverview = useCallback(async () => {
     setOverview(await getPlatformOverview());
@@ -54,10 +60,14 @@ function GestaoPlataformaPage() {
     if (!session) return;
     let cancelled = false;
     setStatus("verifying");
+    setValidationStep("carregando dados do painel");
     void (async () => {
       try {
-        await checkPlatformAdminAccess();
-        const data = await getPlatformOverview();
+        const data = await withTimeout(
+          getPlatformOverview(),
+          20000,
+          "Tempo limite ao carregar os dados administrativos.",
+        );
         if (cancelled) return;
         setOverview(data);
         setStatus("ready");
@@ -86,7 +96,9 @@ function GestaoPlataformaPage() {
   if (status === "checking" || status === "verifying") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Validando acesso administrativo…</p>
+        <p className="text-sm text-muted-foreground">
+          Validando acesso administrativo… {validationStep}
+        </p>
       </main>
     );
   }

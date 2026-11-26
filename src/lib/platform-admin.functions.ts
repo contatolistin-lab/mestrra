@@ -12,7 +12,9 @@ async function requirePlatformAdmin(context: { userId: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const admin = supabaseAdmin as unknown as SupabaseClient;
   const { data, error } = await admin.auth.admin.getUserById(context.userId);
-  if (error || !data.user?.email) throw new Error("Acesso administrativo negado.");
+  if (error || !data.user?.email) {
+    throw new Error("Não foi possível identificar o usuário autenticado no Supabase.");
+  }
 
   const email = data.user.email.trim().toLowerCase();
   const { data: allowed, error: allowedError } = await admin
@@ -21,7 +23,8 @@ async function requirePlatformAdmin(context: { userId: string }) {
     .eq("active", true)
     .ilike("email", email)
     .maybeSingle();
-  if (allowedError || !allowed) throw new Error("Acesso administrativo negado.");
+  if (allowedError) throw new Error(`Erro ao consultar a allowlist: ${allowedError.message}`);
+  if (!allowed) throw new Error(`O e-mail ${email} não está liberado na allowlist administrativa.`);
 
   return { admin, email };
 }

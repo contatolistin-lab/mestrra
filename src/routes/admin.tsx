@@ -61,14 +61,12 @@ function GestaoPlataformaPage() {
         if (cancelled) return;
         setOverview(data);
         setStatus("ready");
-      } catch {
+      } catch (error) {
         await supabase.auth.signOut({ scope: "local" });
         if (cancelled) return;
         setSession(null);
         setOverview(null);
-        setLoginNotice(
-          "Esta conta não tem permissão para a gestão da plataforma. Entre com outro e-mail ou cadastre o acesso.",
-        );
+        setLoginNotice(describeAccessError(error));
         setStatus("login");
       }
     })();
@@ -100,6 +98,14 @@ function GestaoPlataformaPage() {
   if (!overview) return null;
 
   return <PlatformAdminPanel overview={overview} onSaved={loadOverview} onSignOut={signOut} />;
+}
+
+function describeAccessError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Erro desconhecido ao validar o acesso.";
+  if (/No authorization header/i.test(message)) {
+    return "O token de acesso não foi enviado ao servidor. Tente entrar novamente.";
+  }
+  return `Falha ao validar o acesso: ${message}`;
 }
 
 function describeAuthError(error: unknown) {

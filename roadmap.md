@@ -1,6 +1,6 @@
 # mestrra
 
-- [ ] Ampliar Copiloto com campanha, calendário de conteúdo, respostas a clientes e perfil comercial; testar geração e uso autenticado no desktop e celular.
+- [x] Ampliar Copiloto com campanha, calendário de conteúdo, respostas a clientes e perfil comercial; testar geração, edição, cópia e download no layout responsivo autenticado.
 
 - [x] Confirmar conexão com Lovable Cloud e leitura autenticada; corrigir tipagem das funções legadas de vendas e cobranças.
 

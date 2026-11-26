@@ -1,6 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, CalendarDays, Clipboard, Copy, Megaphone, MessageCircle, Store, Sparkles, WandSparkles } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Clipboard,
+  Copy,
+  Megaphone,
+  MessageCircle,
+  Store,
+  Sparkles,
+  WandSparkles,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import type { BusinessData } from "@/lib/business.functions";
@@ -214,12 +224,30 @@ export function Copiloto({
 
       <Tabs defaultValue="instagram">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3">
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="instagram"><WandSparkles size={15} />Instagram</TabsTrigger>
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="whatsapp"><MessageCircle size={15} />WhatsApp</TabsTrigger>
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="campaign"><Megaphone size={15} />Campanhas</TabsTrigger>
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="calendar"><CalendarDays size={15} />Calendário</TabsTrigger>
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="reply"><MessageCircle size={15} />Atendimento</TabsTrigger>
-          <TabsTrigger className="min-h-10 gap-2 text-xs" value="profile"><Store size={15} />Perfil comercial</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="instagram">
+            <WandSparkles size={15} />
+            Instagram
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="whatsapp">
+            <MessageCircle size={15} />
+            WhatsApp
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="campaign">
+            <Megaphone size={15} />
+            Campanhas
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="calendar">
+            <CalendarDays size={15} />
+            Calendário
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="reply">
+            <MessageCircle size={15} />
+            Atendimento
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="profile">
+            <Store size={15} />
+            Perfil comercial
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="instagram" className="mt-4">
           {cards(instagram, "instagram")}
@@ -235,7 +263,10 @@ export function Copiloto({
       </Tabs>
 
       <div className="flex justify-end">
-        <Button className="h-auto min-h-9 whitespace-normal text-left" onClick={() => void navigate({ to: "/vendas", search: { itemId: item?.id } })}>
+        <Button
+          className="h-auto min-h-9 whitespace-normal text-left"
+          onClick={() => void navigate({ to: "/vendas", search: { itemId: item?.id } })}
+        >
           Gerar link de cobrança para este item <ArrowRight />
         </Button>
       </div>

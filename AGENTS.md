@@ -34,3 +34,4 @@ use the editor.
 - Keep the public home and subscription page on the shared SalesPage presentation so offer details and checkout remain consistent.
 - Use a captured demo workspace asset for landing-page product imagery so visitors inspect the actual app rather than fictional results.
 - Type legacy payment-function database clients with the generated Database schema, including helper parameters, to avoid generic client inference resolving tables to never.
+- Keep Copiloto's practical marketing generators in a browser-safe pure module and editable drafts in the tool view; this reuses catalog data without requiring a paid AI service or storing customer messages.

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/copiloto")({
   head: () =>
     routeMeta(
       "Copiloto de marketing",
-      "Crie conteúdos e scripts de venda a partir do seu catálogo.",
+      "Organize campanhas, uma semana de conteúdo, respostas a clientes e seu perfil comercial com os dados do seu catálogo Mestrra.",
     ),
   component: () => (
     <AuthenticatedShell>

@@ -1,5 +1,7 @@
 # mestrra
 
+- [ ] Ampliar Copiloto com campanha, calendário de conteúdo, respostas a clientes e perfil comercial; testar geração e uso autenticado no desktop e celular.
+
 - [x] Confirmar conexão com Lovable Cloud e leitura autenticada; corrigir tipagem das funções legadas de vendas e cobranças.
 
 - [x] Revisar textos e visual da landing page, com destaque para plano e FAQ; validar no desktop e celular.

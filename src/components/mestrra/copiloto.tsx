@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Clipboard, Copy, MessageCircle, Sparkles, WandSparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Clipboard, Copy, Megaphone, MessageCircle, Store, Sparkles, WandSparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import type { BusinessData } from "@/lib/business.functions";
 import { generateCopy, money } from "@/lib/mestrra";
 import { toast } from "sonner";
+import { MarketingTools } from "@/components/mestrra/marketing-tools";
 
 const tones = [
   { value: "urgente", label: "Direto e Urgente", hint: "Oferta relâmpago" },
@@ -42,7 +43,7 @@ export function Copiloto({
         target_audience: freeAudience || null,
         main_benefit: freeBenefit || null,
         pain_point_solved: freePain || null,
-        suggested_price: freePrice || 1,
+        suggested_price: freePrice || 0,
         promo_sale_price: null,
         is_promo_sale_active: false,
       },
@@ -123,11 +124,11 @@ export function Copiloto({
           Copiloto de marketing<span className="text-primary">.</span>
         </h1>
         <p className="mt-2 text-xs text-muted-foreground">
-          Conteúdo que atrai e conversas que fecham, geradas a partir da sua esteira.
+          Sua divulgação, seus pedidos e o relacionamento com seus clientes.
         </p>
       </div>
 
-      <section className="surface p-5 space-y-5">
+      <section className="border-y py-5 space-y-5">
         <div className="flex items-center gap-2">
           <Clipboard size={17} className="text-info" />
           <h2 className="section-heading">O que vamos vender hoje?</h2>
@@ -212,9 +213,13 @@ export function Copiloto({
       </section>
 
       <Tabs defaultValue="instagram">
-        <TabsList>
-          <TabsTrigger value="instagram">Copiloto Instagram</TabsTrigger>
-          <TabsTrigger value="whatsapp">Copiloto WhatsApp</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3">
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="instagram"><WandSparkles size={15} />Instagram</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="whatsapp"><MessageCircle size={15} />WhatsApp</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="campaign"><Megaphone size={15} />Campanhas</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="calendar"><CalendarDays size={15} />Calendário</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="reply"><MessageCircle size={15} />Atendimento</TabsTrigger>
+          <TabsTrigger className="min-h-10 gap-2 text-xs" value="profile"><Store size={15} />Perfil comercial</TabsTrigger>
         </TabsList>
         <TabsContent value="instagram" className="mt-4">
           {cards(instagram, "instagram")}
@@ -222,10 +227,15 @@ export function Copiloto({
         <TabsContent value="whatsapp" className="mt-4">
           {cards(whatsapp, "whatsapp")}
         </TabsContent>
+        {(["campaign", "calendar", "reply", "profile"] as const).map((tool) => (
+          <TabsContent key={tool} value={tool} className="mt-5">
+            <MarketingTools tool={tool} content={content} onCopy={copy} />
+          </TabsContent>
+        ))}
       </Tabs>
 
       <div className="flex justify-end">
-        <Button onClick={() => void navigate({ to: "/vendas", search: { itemId: item?.id } })}>
+        <Button className="h-auto min-h-9 whitespace-normal text-left" onClick={() => void navigate({ to: "/vendas", search: { itemId: item?.id } })}>
           Gerar link de cobrança para este item <ArrowRight />
         </Button>
       </div>

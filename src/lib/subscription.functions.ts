@@ -30,7 +30,14 @@ function normalizeCheckoutUrl(value: unknown) {
   }
   const withProtocol = value.startsWith("http") ? value : `https://${value}`;
   const url = new URL(withProtocol);
-  if (!url.hostname.includes("mercadopago")) {
+  const allowedHosts = new Set([
+    "mercadopago.com",
+    "www.mercadopago.com",
+    "mercadopago.com.br",
+    "www.mercadopago.com.br",
+    "sandbox.mercadopago.com.br",
+  ]);
+  if (!allowedHosts.has(url.hostname)) {
     throw new Error("Link de checkout inválido retornado pelo Mercado Pago.");
   }
   return url.toString();
@@ -99,7 +106,16 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       throw new Error(message);
     }
 
-    const checkoutUrl = normalizeCheckoutUrl(payload?.init_point);
+    let checkoutUrl: string;
+    try {
+      checkoutUrl = normalizeCheckoutUrl(payload?.init_point);
+    } catch (error) {
+      await admin
+        .from("platform_subscriptions")
+        .update({ status: "failed", updated_at: new Date().toISOString() })
+        .eq("external_reference", externalReference);
+      throw error;
+    }
     const subscriptionId = typeof payload?.id === "string" ? payload.id : null;
     const { error: updateError } = await admin
       .from("platform_subscriptions")

@@ -18,7 +18,10 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
 import { isDemoMode } from "@/lib/demo-mode";
+import { readFunctionError } from "@/lib/function-error";
 import { resolvePriceBand, useManagementState, type Quote } from "@/lib/management";
+import { getMpStatus } from "@/lib/mp-status.functions";
+import { useMpStatus } from "@/lib/use-mp-status";
 import { money, phoneMask, shortDate } from "@/lib/mestrra";
 import { requiredStock, stockShortageMessage } from "@/lib/stock";
 import { toast } from "sonner";
@@ -32,6 +35,8 @@ export function Sales({
   initialItemId: string | undefined;
 }) {
   const client = useQueryClient();
+  const mpStatusQuery = useMpStatus();
+  const mpReady = isDemoMode || !!mpStatusQuery.data?.connected;
   const { state: management } = useManagementState(data.userId);
   const [itemId, setItemId] = useState(
     initialItemId && data.catalog.some((item) => item.id === initialItemId) ? initialItemId : "",
@@ -197,8 +202,19 @@ export function Sales({
 
   async function checkoutSale() {
     if (!valid()) return;
+    if (!mpReady) {
+      toast.error("Conecte sua conta Mercado Pago em Configurações antes de gerar a cobrança.");
+      return;
+    }
     setBusy(true);
     try {
+      if (!isDemoMode) {
+        const status = await getMpStatus();
+        if (!status.connected) {
+          toast.error("Conecte sua conta Mercado Pago em Configurações antes de gerar a cobrança.");
+          return;
+        }
+      }
       const orderId = await createOrder("mp_checkout_pro", unitPrice);
       const { data: result, error } = await supabase.functions.invoke("create-mp-preference", {
         body: { orderId },
@@ -207,10 +223,15 @@ export function Sales({
       const url = result?.init_point as string | undefined;
       if (!url) throw new Error("O Mercado Pago não retornou o link de cobrança.");
       setCheckout({ url, orderId, customer: customer.trim(), phone: phoneMask(whatsapp) });
-      await client.invalidateQueries({ queryKey: ["business"] });
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["business"] }),
+        client.invalidateQueries({ queryKey: ["mp-status"] }),
+      ]);
       toast.success("Cobrança criada! Compartilhe o link ou o QR Code com o cliente.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível gerar a cobrança.");
+      toast.error(
+        await readFunctionError(error, "Não foi possível gerar a cobrança. Tente novamente."),
+      );
     } finally {
       setBusy(false);
     }
@@ -347,7 +368,12 @@ export function Sales({
             </div>
           )}
           <div className="space-y-3">
-            <Button className="w-full" disabled={busy || !item} onClick={() => void checkoutSale()}>
+            <Button
+              className="w-full"
+              disabled={busy || !item || !mpReady}
+              title={mpReady ? undefined : "Conecte o Mercado Pago em Configurações"}
+              onClick={() => void checkoutSale()}
+            >
               <Link2 size={16} /> Gerar link e QR Code (Mercado Pago Checkout Pro)
             </Button>
             <div className="flex flex-wrap gap-2 items-center">

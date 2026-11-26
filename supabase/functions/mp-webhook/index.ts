@@ -16,6 +16,55 @@ type OrderRow = {
   quantity: number;
 };
 
+type MpConnection = {
+  access_token: string;
+  refresh_token: string | null;
+  expires_at: string | null;
+};
+
+type SupabaseClient = ReturnType<typeof createClient>;
+
+async function validAccessToken(
+  supabase: SupabaseClient,
+  sellerId: string,
+  connection: MpConnection,
+): Promise<string> {
+  const expiresAt = connection.expires_at ? new Date(connection.expires_at).getTime() : 0;
+  if (expiresAt > Date.now() + 60_000) return connection.access_token;
+  if (!connection.refresh_token) return connection.access_token;
+
+  const clientId = Deno.env.get("MP_CLIENT_ID");
+  const clientSecret = Deno.env.get("MP_CLIENT_SECRET");
+  if (!clientId || !clientSecret)
+    throw new Error("A renovação automática do Mercado Pago não está configurada.");
+
+  const response = await fetch("https://api.mercadopago.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: connection.refresh_token,
+    }),
+  });
+  const refreshed = await response.json();
+  if (!response.ok || !refreshed.access_token)
+    throw new Error(refreshed.message || "Não foi possível renovar o token do Mercado Pago.");
+
+  const { error: updateError } = await supabase
+    .from("payment_connections")
+    .update({
+      access_token: refreshed.access_token,
+      refresh_token: refreshed.refresh_token ?? connection.refresh_token,
+      expires_at: new Date(Date.now() + Number(refreshed.expires_in || 3600) * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", sellerId);
+  if (updateError) throw updateError;
+  return refreshed.access_token;
+}
+
 const response = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), {
     status,
@@ -164,7 +213,7 @@ Deno.serve(async (req: Request) => {
     const dataId = url.searchParams.get("data.id") || String(body?.data?.id || "");
     const eventType = String(body?.type || body?.action || "");
     if (!sellerId || !dataId || !eventType.includes("payment")) {
-      return response({ received: false, reason: "Notificação ignorada" }, 400);
+      return response({ received: false, reason: "Notificação ignorada" });
     }
 
     const signature = await validSignature(req, dataId);
@@ -176,18 +225,20 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: connection } = await supabase
+    const { data: connection, error: connectionError } = await supabase
       .from("payment_connections")
       .select("*")
       .eq("user_id", sellerId)
       .single();
+    if (connectionError) throw connectionError;
     if (!connection) {
-      return response({ received: false, reason: "Vendedor não conectado" }, 200);
+      return response({ received: false, reason: "Vendedor não conectado" });
     }
 
+    const accessToken = await validAccessToken(supabase, sellerId, connection as MpConnection);
     const paymentId = dataId;
     const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: { Authorization: `Bearer ${connection.access_token}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!paymentResponse.ok) {
       return response({ received: false, reason: "Pagamento não encontrado" }, 502);
@@ -196,13 +247,14 @@ Deno.serve(async (req: Request) => {
     const orderId = String(payment.external_reference || "");
     if (!orderId) return response({ received: true });
 
-    const { data: order } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("id,user_id,status,stock_deducted,total_amount,catalog_item_id,quantity")
       .eq("id", orderId)
       .eq("user_id", sellerId)
       .single();
-    if (!order) return response({ received: false, reason: "Pedido não encontrado" }, 200);
+    if (orderError) throw orderError;
+    if (!order) return response({ received: false, reason: "Pedido não encontrado" });
 
     const status = String(payment.status || "").toLowerCase();
     const paidAmount = Number(
@@ -219,27 +271,30 @@ Deno.serve(async (req: Request) => {
         p_order_id: order.id,
       });
       if (processError) throw processError;
-      await supabase
+      const { error: updateError } = await supabase
         .from("orders")
         .update({ mp_payment_id: String(payment.id) })
         .eq("id", order.id);
+      if (updateError) throw updateError;
       return response({ received: true });
     }
 
     if (["rejected", "cancelled"].includes(status) && order.status === "pending") {
-      await supabase
+      const { error: updateError } = await supabase
         .from("orders")
         .update({ status: "cancelled", mp_payment_id: String(payment.id) })
         .eq("id", order.id);
+      if (updateError) throw updateError;
       return response({ received: true });
     }
 
     if (["charged_back", "refunded"].includes(status) && order.status === "paid") {
       await reversePaidOrder(supabase, order as OrderRow);
-      await supabase
+      const { error: updateError } = await supabase
         .from("orders")
         .update({ status: "cancelled", mp_payment_id: String(payment.id) })
         .eq("id", order.id);
+      if (updateError) throw updateError;
       return response({ received: true });
     }
 

@@ -22,3 +22,20 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Integrações reais
+
+Copie `.env.example` para `.env` e preencha apenas as variáveis públicas `VITE_*` no repositório. As demais devem ficar em Secrets do Lovable/Supabase, nunca versionadas.
+
+- Supabase: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+- Mercado Pago (plataforma): `MP_ACCESS_TOKEN` ou `MP_PLATFORM_ACCESS_TOKEN` para a assinatura mensal.
+- Mercado Pago (conexão do vendedor): `MP_CLIENT_ID`, `MP_CLIENT_SECRET`, `MP_REDIRECT_URI`.
+- Webhooks: `MP_WEBHOOK_SECRET` para vendas e `MP_SUBSCRIPTION_WEBHOOK_SECRET` para assinaturas (se o mesmo segredo for usado no painel do MP, configure o mesmo valor nas duas variáveis).
+- `SITE_URL` ou `APP_URL` define o domínio usado nos retornos de checkout.
+
+No aplicativo do Mercado Pago, cadastre como Redirect URL exatamente o valor de `MP_REDIRECT_URI`, apontando para `/mp-callback`. As URLs de notificação são:
+
+- Vendas: `<SUPABASE_URL>/functions/v1/mp-webhook?user_id=<uuid>`
+- Assinaturas: `<SUPABASE_URL>/functions/v1/subscription-webhook`
+
+Antes de publicar, aplique no banco as tabelas `platform_subscriptions`, `admin_allowlist` e `platform_admin_inputs` e publique as Edge Functions `mp-oauth-start`, `mp-oauth-exchange`, `create-order`, `create-mp-preference`, `mp-webhook` e `subscription-webhook`.

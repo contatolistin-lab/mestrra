@@ -297,7 +297,7 @@ export function normalizePlatformQrPayment(
   };
 }
 
-const activeStatuses = new Set(["active", "authorized", "confirmed", "paid"]);
+const activeStatuses = new Set(["active", "authorized", "approved", "confirmed", "paid"]);
 
 function isActive(subscription: PlatformSubscription) {
   return activeStatuses.has(subscription.status) && !subscription.cancelledAt;

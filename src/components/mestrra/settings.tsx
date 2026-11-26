@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowUpRight,
@@ -12,12 +13,18 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/resolved-client";
 import { toast } from "sonner";
 import type { BusinessData } from "@/lib/business.functions";
+import { readFunctionError } from "@/lib/function-error";
+import { disconnectMpAccount } from "@/lib/mp-status.functions";
+import { useMpStatus } from "@/lib/use-mp-status";
 import { ProfileForm } from "./forms";
 import { FiscalBackupPanel } from "./management";
 
 export function SettingsPanel({ data }: { data: BusinessData }) {
   const [connecting, setConnecting] = useState(false);
-  const connected = !!data.profile?.mp_connected;
+  const [disconnecting, setDisconnecting] = useState(false);
+  const client = useQueryClient();
+  const statusQuery = useMpStatus();
+  const status = statusQuery.data;
 
   async function connect() {
     setConnecting(true);
@@ -25,14 +32,30 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
       const { data: result, error } = await supabase.functions.invoke("mp-oauth-start");
       if (error) throw error;
       const url = result?.url as string | undefined;
-      if (!url)
-        throw new Error(
-          "Não foi possível iniciar a conexão. Verifique as secrets MP_CLIENT_ID e MP_REDIRECT_URI.",
-        );
+      if (!url) throw new Error("Não foi possível abrir a autorização do Mercado Pago.");
       window.location.assign(url);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Falha ao iniciar a conexão.");
+      toast.error(
+        await readFunctionError(error, "Não foi possível iniciar a conexão. Tente novamente."),
+      );
+    } finally {
       setConnecting(false);
+    }
+  }
+
+  async function disconnect() {
+    setDisconnecting(true);
+    try {
+      await disconnectMpAccount();
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["business"] }),
+        client.invalidateQueries({ queryKey: ["mp-status"] }),
+      ]);
+      toast.success("Conta Mercado Pago desconectada.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível desconectar.");
+    } finally {
+      setDisconnecting(false);
     }
   }
 
@@ -76,25 +99,53 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
               O dinheiro das vendas cai direto na sua conta Mercado Pago. A mestrra apenas
               automatiza a cobrança, a baixa de estoque e o lançamento no caixa.
             </p>
-            <div className="mt-5 flex items-center gap-2 text-[11px]">
-              {connected ? (
-                <CheckCircle2 size={16} className="text-success" />
-              ) : (
-                <LockKeyhole size={16} className="text-info" />
-              )}
-              {connected ? "Conta conectada e pronta para cobrar" : "Nenhuma conta conectada"}
-            </div>
-            <Button
-              className="mt-5 w-full"
-              onClick={() => void connect()}
-              disabled={connecting || connected}
+            <div
+              className="mt-5 flex items-center gap-2 text-[11px]"
+              role="status"
+              aria-live="polite"
             >
-              {connecting
-                ? "Abrindo Mercado Pago..."
-                : connected
-                  ? "Conta conectada"
-                  : "Conectar Mercado Pago"}
-            </Button>
+              {statusQuery.isPending ? (
+                "Verificando sua conexão com o Mercado Pago..."
+              ) : status?.connected ? (
+                <>
+                  <CheckCircle2 size={16} className="text-success" />
+                  Conta conectada{status.accountId ? ` · ${status.accountId}` : ""}
+                </>
+              ) : (
+                <>
+                  <LockKeyhole size={16} className="text-info" />
+                  Nenhuma conta conectada
+                </>
+              )}
+            </div>
+            {status?.needsAttention && (
+              <p className="mt-2 text-[11px] text-warning">
+                A autorização pode ter expirado no Mercado Pago. Reconecte para continuar cobrando.
+              </p>
+            )}
+            <div className="mt-5 flex flex-col gap-2">
+              <Button
+                className="w-full"
+                onClick={() => void connect()}
+                disabled={connecting || disconnecting}
+              >
+                {connecting
+                  ? "Abrindo Mercado Pago..."
+                  : status?.connected
+                    ? "Trocar conta Mercado Pago"
+                    : "Conectar Mercado Pago"}
+              </Button>
+              {status?.connected && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void disconnect()}
+                  disabled={connecting || disconnecting}
+                >
+                  {disconnecting ? "Desconectando..." : "Desconectar Mercado Pago"}
+                </Button>
+              )}
+            </div>
           </div>
           <div className="p-5 space-y-3 text-[11px] text-muted-foreground">
             <div className="flex gap-2 items-start">
@@ -108,10 +159,8 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
               </span>
             </div>
             <p>
-              Configure as secrets <code className="text-foreground">MP_CLIENT_ID</code>,{" "}
-              <code className="text-foreground">MP_CLIENT_SECRET</code> e{" "}
-              <code className="text-foreground">MP_REDIRECT_URI</code> no Supabase para ativar o
-              OAuth.
+              A autorização é usada apenas para criar cobranças e confirmar pagamentos. Você pode
+              trocar ou remover a conta conectada quando quiser.
             </p>
             <Button variant="link" className="h-auto p-0 text-info text-[11px]" asChild>
               <Link to="/vendas" search={{ itemId: undefined }}>

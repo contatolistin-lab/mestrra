@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { supabase } from "@/integrations/supabase/resolved-client";
 import type { BusinessData } from "@/lib/business.functions";
 import { isDemoMode } from "@/lib/demo-mode";
+import { useMpStatus } from "@/lib/use-mp-status";
 import { Brand } from "./brand";
 const navigation = [
   { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
@@ -51,6 +52,8 @@ export function Shell({
   const location = useLocation();
   const navigate = useNavigate();
   const client = useQueryClient();
+  const mpStatusQuery = useMpStatus();
+  const mpConnected = demo || isDemoMode || !!mpStatusQuery.data?.connected;
   const [notifications, setNotifications] = useState(false);
   useEffect(() => {
     if (demo) return;
@@ -216,7 +219,7 @@ export function Shell({
           <div className="flex gap-4 items-center">
             <span className="status info hidden sm:inline-flex">
               <span className="size-1.5 bg-info rounded-full" />
-              Esteira conectada
+              {mpConnected ? "Cobrança conectada" : "Conecte o Mercado Pago"}
             </span>
             {demo && (
               <Button variant="outline" size="sm" asChild>
@@ -264,7 +267,7 @@ export function Shell({
               </p>
               <span className="text-[10px] text-info font-medium flex items-center gap-1">
                 <span className="size-1.5 rounded-full bg-info" />
-                Tudo conectado
+                {mpConnected ? "Cobrança conectada" : "Cobrança pendente"}
               </span>
             </div>
             <div className="step-bar">

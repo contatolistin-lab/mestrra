@@ -22,7 +22,7 @@ function constantTimeEquals(a: string, b: string) {
 }
 
 async function validSignature(req: Request, dataId: string) {
-  const secret = Deno.env.get("MP_WEBHOOK_SECRET");
+  const secret = Deno.env.get("MP_SUBSCRIPTION_WEBHOOK_SECRET") ?? Deno.env.get("MP_WEBHOOK_SECRET");
   if (!secret) return { ok: false, status: 500, reason: "Segredo do webhook não configurado" };
 
   const parts = Object.fromEntries(
@@ -65,9 +65,10 @@ async function validSignature(req: Request, dataId: string) {
 
 function normalizeStatus(value: unknown) {
   const status = String(value || "").toLowerCase();
-  if (["authorized", "active", "confirmed", "paid"].includes(status)) return "active";
+  if (["authorized", "active", "approved", "confirmed", "paid"].includes(status)) return "active";
   if (["cancelled", "canceled"].includes(status)) return "cancelled";
   if (status === "expired") return "expired";
+  if (status === "failed" || status === "rejected") return "failed";
   return "pending";
 }
 
@@ -92,7 +93,7 @@ Deno.serve(async (req: Request) => {
     const isPreapproval = eventType.includes("preapproval");
     const isAuthorizedPayment = eventType.includes("authorized_payment");
     if (!dataId || (!isPreapproval && !isAuthorizedPayment)) {
-      return response({ received: false, reason: "Notificação ignorada" }, 400);
+      return response({ received: false, reason: "Notificação ignorada" });
     }
 
     const signature = await validSignature(req, dataId);
@@ -116,7 +117,9 @@ Deno.serve(async (req: Request) => {
     }
     const payload = (await mpResponse.json()) as Record<string, unknown>;
     const externalReference = String(payload["external_reference"] || "");
-    const preapprovalId = String(payload["id"] || dataId);
+    const preapprovalId = isPreapproval
+      ? String(payload["id"] || dataId)
+      : String(payload["preapproval_id"] || "");
     const status = normalizeStatus(payload["status"]);
     const autoRecurring = payload["auto_recurring"];
     const amountSource =
@@ -134,22 +137,27 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: byPreapproval } = await supabase
-      .from("platform_subscriptions")
-      .select("id")
-      .eq("preapproval_id", preapprovalId)
-      .maybeSingle();
-    const { data: byReference } = externalReference
+    const { data: byPreapproval, error: preapprovalError } = preapprovalId
+      ? await supabase
+          .from("platform_subscriptions")
+          .select("id")
+          .eq("preapproval_id", preapprovalId)
+          .maybeSingle()
+      : { data: null, error: null };
+    if (preapprovalError) throw preapprovalError;
+
+    const { data: byReference, error: referenceError } = externalReference
       ? await supabase
           .from("platform_subscriptions")
           .select("id")
           .eq("external_reference", externalReference)
           .maybeSingle()
-      : { data: null };
+      : { data: null, error: null };
+    if (referenceError) throw referenceError;
 
     const update = {
       status,
-      preapproval_id: preapprovalId,
+      ...(preapprovalId ? { preapproval_id: preapprovalId } : {}),
       payer_name: name,
       ...(amount > 0 ? { amount } : {}),
       ...(email ? { email } : {}),
@@ -168,8 +176,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const { error } = await supabase.from("platform_subscriptions").insert({
-      external_reference: externalReference || `mp-${preapprovalId}-${Date.now()}`,
-      preapproval_id: preapprovalId,
+      external_reference: externalReference || `mp-${preapprovalId || dataId}-${Date.now()}`,
+      preapproval_id: preapprovalId || null,
       email: email || "desconhecido@mercadopago.local",
       payer_name: name,
       status,

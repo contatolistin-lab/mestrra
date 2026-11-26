@@ -12,23 +12,55 @@ type MpConnection = {
   expires_at: string | null;
 };
 
-async function validAccessToken(connection: MpConnection): Promise<string> {
+type SupabaseClient = ReturnType<typeof createClient>;
+
+function publicSiteUrl(req: Request) {
+  const configured = Deno.env.get("SITE_URL") ?? Deno.env.get("APP_URL");
+  if (configured) return new URL(configured).origin;
+  const origin = req.headers.get("origin");
+  return origin ? new URL(origin).origin : "";
+}
+
+async function validAccessToken(
+  supabase: SupabaseClient,
+  userId: string,
+  connection: MpConnection,
+): Promise<string> {
   const expiresAt = connection.expires_at ? new Date(connection.expires_at).getTime() : 0;
   if (expiresAt > Date.now() + 60_000) return connection.access_token;
   if (!connection.refresh_token) return connection.access_token;
+
+  const clientId = Deno.env.get("MP_CLIENT_ID");
+  const clientSecret = Deno.env.get("MP_CLIENT_SECRET");
+  if (!clientId || !clientSecret)
+    throw new Error("A renovação automática do Mercado Pago não está configurada.");
+
   const response = await fetch("https://api.mercadopago.com/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       grant_type: "refresh_token",
-      client_id: Deno.env.get("MP_CLIENT_ID"),
-      client_secret: Deno.env.get("MP_CLIENT_SECRET"),
+      client_id: clientId,
+      client_secret: clientSecret,
       refresh_token: connection.refresh_token,
     }),
   });
   const refreshed = await response.json();
   if (!response.ok || !refreshed.access_token)
     throw new Error(refreshed.message || "Não foi possível renovar o token do Mercado Pago.");
+
+  const { error: updateError } = await supabase
+    .from("payment_connections")
+    .update({
+      access_token: refreshed.access_token,
+      refresh_token: refreshed.refresh_token ?? connection.refresh_token,
+      expires_at: new Date(
+        Date.now() + Number(refreshed.expires_in || 3600) * 1000,
+      ).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+  if (updateError) throw updateError;
   return refreshed.access_token;
 }
 
@@ -64,15 +96,20 @@ Deno.serve(async (req: Request) => {
       .single();
     if (connectionError || !connection)
       throw new Error("Conecte sua conta Mercado Pago em Configurações antes de cobrar.");
-    const accessToken = await validAccessToken(connection);
+    const accessToken = await validAccessToken(supabase, auth.user.id, connection);
 
-    const { data: item } = await supabase
+    const { data: item, error: itemError } = await supabase
       .from("catalog_items")
       .select("name")
       .eq("id", order.catalog_item_id)
       .single();
-    const notificationUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/mp-webhook?user_id=${auth.user.id}`;
-    const backUrl = Deno.env.get("MP_REDIRECT_URI") || "";
+    if (itemError) throw itemError;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/$/, "") ?? "";
+    const notificationUrl = `${supabaseUrl}/functions/v1/mp-webhook?user_id=${auth.user.id}`;
+    const siteUrl = publicSiteUrl(req);
+    const checkoutBackUrl = (status: string) =>
+      siteUrl ? `${siteUrl}/vendas?checkout=${status}` : "";
 
     const preferenceResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -90,7 +127,15 @@ Deno.serve(async (req: Request) => {
         external_reference: order.id,
         binary_mode: true,
         notification_url: notificationUrl,
-        back_urls: { success: backUrl, pending: backUrl, failure: backUrl },
+        ...(siteUrl
+          ? {
+              back_urls: {
+                success: checkoutBackUrl("aprovado"),
+                pending: checkoutBackUrl("pendente"),
+                failure: checkoutBackUrl("falhou"),
+              },
+            }
+          : {}),
         metadata: { order_id: order.id, seller_id: auth.user.id },
       }),
     });
@@ -102,7 +147,8 @@ Deno.serve(async (req: Request) => {
     const { error: updateError } = await supabase
       .from("orders")
       .update({ mp_preference_id: preference.id, checkout_url: preference.init_point })
-      .eq("id", order.id);
+      .eq("id", order.id)
+      .eq("user_id", auth.user.id);
     if (updateError) throw updateError;
 
     return new Response(JSON.stringify({ init_point: preference.init_point, id: preference.id }), {

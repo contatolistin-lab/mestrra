@@ -32,7 +32,6 @@ Deno.serve(async (req: Request) => {
     if (stateError || !savedState || new Date(savedState.expires_at) < new Date()) {
       throw new Error("Solicitação de conexão inválida ou expirada. Tente novamente.");
     }
-    await supabase.from("oauth_states").delete().eq("state", savedState.state);
 
     const clientId = Deno.env.get("MP_CLIENT_ID");
     const clientSecret = Deno.env.get("MP_CLIENT_SECRET");
@@ -56,20 +55,27 @@ Deno.serve(async (req: Request) => {
       throw new Error(credentials.message || "Não foi possível trocar o código pelos tokens.");
     }
 
-    let publicKey: string | null = null;
+    let publicKey: string | null =
+      typeof credentials.public_key === "string" ? credentials.public_key : null;
     const settingsResponse = await fetch("https://api.mercadopago.com/v1/account/settings", {
       headers: { Authorization: `Bearer ${credentials.access_token}` },
     });
     if (settingsResponse.ok) {
       const settings = await settingsResponse.json();
-      publicKey = settings.public_key ?? null;
+      publicKey = publicKey || settings.public_key || null;
     }
+
+    const { error: stateDeleteError } = await supabase
+      .from("oauth_states")
+      .delete()
+      .eq("state", savedState.state);
+    if (stateDeleteError) throw stateDeleteError;
 
     const { error: connectionError } = await supabase.from("payment_connections").upsert({
       user_id: auth.user.id,
       access_token: credentials.access_token,
       refresh_token: credentials.refresh_token ?? null,
-      mp_user_id: String(credentials.user_id ?? null),
+      mp_user_id: credentials.user_id ? String(credentials.user_id) : null,
       public_key: publicKey,
       expires_at: new Date(
         Date.now() + Number(credentials.expires_in || 3600) * 1000,

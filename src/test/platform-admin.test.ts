@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildPlatformOverview,
   normalizePlatformAdminInputs,
+  normalizePlatformQrPayment,
   normalizePlatformSubscription,
 } from "@/lib/platform-admin";
 
@@ -107,5 +108,56 @@ describe("platform admin", () => {
     expect(inputs.csatAverage).toBe(5);
     expect(inputs.visitors).toBe(0);
     expect(normalizePlatformSubscription({ status: "active" })).toBeNull();
+  });
+
+  it("mapeia pagamentos e transações feitas pelo QR Code", () => {
+    const overview = buildPlatformOverview(
+      [],
+      {},
+      [],
+      [
+        {
+          id: "order-1",
+          user_id: "seller-1",
+          customer_name: "Ana",
+          payment_method: "mp_checkout_pro",
+          status: "paid",
+          total_amount: 80,
+          mp_preference_id: "pref-1",
+          mp_payment_id: "pay-1",
+          checkout_url: "https://checkout.example.com/1",
+          paid_at: "2026-11-10T10:00:00Z",
+          created_at: "2026-11-09T10:00:00Z",
+        },
+        {
+          id: "order-2",
+          user_id: "seller-2",
+          customer_name: "Bruno",
+          payment_method: "manual_pix",
+          status: "paid",
+          total_amount: 50,
+          paid_at: "2026-11-12T10:00:00Z",
+          created_at: "2026-11-12T10:00:00Z",
+        },
+        {
+          id: "order-3",
+          payment_method: "manual_dinheiro",
+          status: "paid",
+          total_amount: 20,
+        },
+      ],
+      [
+        { id: "cash-1", order_id: "order-1", amount: 80, transaction_date: "2026-11-10T10:00:00Z" },
+        { id: "cash-2", order_id: "order-2", amount: 50, transaction_date: "2026-11-12T10:00:00Z" },
+      ],
+    );
+
+    expect(overview.qrPayments).toHaveLength(2);
+    expect(overview.qrTotals.total).toBe(2);
+    expect(overview.qrTotals.paid).toBe(2);
+    expect(overview.qrTotals.amount).toBe(130);
+    expect(overview.qrTotals.cashflow).toBe(130);
+    expect(overview.qrPayments[0]?.paymentId).toBe("pay-1");
+    expect(normalizePlatformQrPayment({ payment_method: "manual_dinheiro" })).toBeNull();
   });
 });

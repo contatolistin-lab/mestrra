@@ -8,6 +8,7 @@ import {
   Gauge,
   Heart,
   LogOut,
+  QrCode,
   RefreshCw,
   Save,
   ShieldCheck,
@@ -197,7 +198,7 @@ export function PlatformAdminPanel({
     }
   }
 
-  const { metrics, inputs, totals, subscribers } = overview;
+  const { metrics, inputs, totals, subscribers, qrPayments, qrTotals } = overview;
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8">
@@ -210,8 +211,8 @@ export function PlatformAdminPanel({
             Gestão da plataforma<span className="text-primary">.</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-            Clientes assinantes do Mercado Pago, receita recorrente e indicadores de crescimento em
-            tempo real.
+            Clientes assinantes, pagamentos via QR Code, receita recorrente e indicadores de
+            crescimento em tempo real.
           </p>
         </div>
         <Button variant="outline" size="sm" type="button" onClick={onSignOut}>
@@ -593,6 +594,114 @@ export function PlatformAdminPanel({
                     </td>
                     <td className="py-3 pr-4 font-mono text-[10px]">
                       {subscriber.preapprovalId || subscriber.externalReference || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <section className="surface p-6 overflow-x-auto">
+          <div className="flex flex-wrap gap-3 items-center justify-between mb-5">
+            <div>
+              <h2 className="section-heading">Pagamentos via QR Code</h2>
+              <p className="text-[11px] mt-1 text-muted-foreground">
+                Pedidos criados pelos usuários com QR do checkout Mercado Pago ou Pix manual.
+              </p>
+            </div>
+            <span className="status info">
+              <QrCode size={12} /> {fmtNumber(qrTotals.paid)} pagos
+            </span>
+          </div>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <MetricCard
+              label="Transações QR"
+              value={fmtNumber(qrTotals.total)}
+              detail="Pedidos com QR gerado"
+              icon={QrCode}
+            />
+            <MetricCard
+              label="Pagamentos confirmados"
+              value={fmtNumber(qrTotals.paid)}
+              detail="Status pago/aprovado"
+              icon={CreditCard}
+              highlight
+            />
+            <MetricCard
+              label="Valor pago"
+              value={fmtMoney(qrTotals.amount)}
+              detail="Soma dos pedidos pagos"
+              icon={Wallet}
+              highlight
+            />
+            <MetricCard
+              label="Pendentes"
+              value={fmtNumber(qrTotals.pending)}
+              detail={`${fmtNumber(qrTotals.cancelled)} cancelados`}
+              icon={Clock}
+            />
+          </div>
+          {qrPayments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              Nenhuma transação via QR Code registrada ainda.
+            </p>
+          ) : (
+            <table className="w-full min-w-[980px] text-left text-xs">
+              <thead className="text-muted-foreground">
+                <tr>
+                  <th className="py-2 pr-4 font-medium">Pedido</th>
+                  <th className="py-2 pr-4 font-medium">Cliente</th>
+                  <th className="py-2 pr-4 font-medium">Vendedor</th>
+                  <th className="py-2 pr-4 font-medium">Status</th>
+                  <th className="py-2 pr-4 font-medium">Forma</th>
+                  <th className="py-2 pr-4 font-medium">Valor</th>
+                  <th className="py-2 pr-4 font-medium">Criado em</th>
+                  <th className="py-2 pr-4 font-medium">Pago em</th>
+                  <th className="py-2 pr-4 font-medium">Pagamento MP</th>
+                  <th className="py-2 pr-4 font-medium">Checkout</th>
+                </tr>
+              </thead>
+              <tbody>
+                {qrPayments.map((payment) => (
+                  <tr key={payment.id || payment.orderId} className="border-t border-border">
+                    <td className="py-3 pr-4 font-mono text-[10px]">{payment.orderId || "—"}</td>
+                    <td className="py-3 pr-4">
+                      <div className="font-medium">
+                        {payment.customerName || "Cliente não informado"}
+                      </div>
+                      {payment.customerWhatsapp && (
+                        <div className="text-muted-foreground">{payment.customerWhatsapp}</div>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 font-mono text-[10px]">{payment.sellerId || "—"}</td>
+                    <td className="py-3 pr-4">
+                      <span className={statusClass(payment.status)}>{payment.status}</span>
+                    </td>
+                    <td className="py-3 pr-4">{payment.paymentMethod || "—"}</td>
+                    <td className="py-3 pr-4">{fmtMoney(payment.amount)}</td>
+                    <td className="py-3 pr-4">
+                      {payment.createdAt ? shortDate(payment.createdAt) : "—"}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {payment.paidAt ? shortDate(payment.paidAt) : "—"}
+                    </td>
+                    <td className="py-3 pr-4 font-mono text-[10px]">
+                      {payment.paymentId || payment.preferenceId || "—"}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {payment.checkoutUrl ? (
+                        <a
+                          href={payment.checkoutUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          Abrir
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 ))}

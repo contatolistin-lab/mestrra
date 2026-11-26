@@ -167,16 +167,36 @@ export const getPlatformOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { admin } = await requirePlatformAdmin(context);
-    const [subscriptions, inputs, profiles] = await Promise.all([
+    const [subscriptions, inputs, profiles, orders, cashflow] = await Promise.all([
       admin.from("platform_subscriptions").select("*").order("created_at", { ascending: false }),
       admin.from("platform_admin_inputs").select("*").eq("id", 1).maybeSingle(),
       admin.from("profiles").select("id,created_at,business_name").order("created_at"),
+      admin
+        .from("orders")
+        .select(
+          "id,user_id,customer_name,customer_whatsapp,total_amount,payment_method,status,mp_preference_id,mp_payment_id,checkout_url,paid_at,created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      admin
+        .from("cashflow_transactions")
+        .select("id,order_id,amount,transaction_date")
+        .order("transaction_date", { ascending: false })
+        .limit(1000),
     ]);
     if (subscriptions.error) throw new Error(subscriptions.error.message);
     if (inputs.error) throw new Error(inputs.error.message);
     if (profiles.error) throw new Error(profiles.error.message);
+    if (orders.error) throw new Error(orders.error.message);
+    if (cashflow.error) throw new Error(cashflow.error.message);
 
-    return buildPlatformOverview(subscriptions.data ?? [], inputs.data ?? {}, profiles.data ?? []);
+    return buildPlatformOverview(
+      subscriptions.data ?? [],
+      inputs.data ?? {},
+      profiles.data ?? [],
+      orders.data ?? [],
+      cashflow.data ?? [],
+    );
   });
 
 export const savePlatformAdminInputs = createServerFn({ method: "POST" })

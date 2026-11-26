@@ -92,11 +92,41 @@ export type PlatformSubscription = {
 
 export type PlatformSubscriber = PlatformSubscription;
 
+export type PlatformQrPayment = {
+  id: string;
+  orderId: string;
+  sellerId: string | null;
+  customerName: string | null;
+  customerWhatsapp: string | null;
+  status: string;
+  paymentMethod: string;
+  amount: number;
+  currency: string;
+  paymentId: string | null;
+  preferenceId: string | null;
+  checkoutUrl: string | null;
+  createdAt: string | null;
+  paidAt: string | null;
+  cashflowAmount: number | null;
+  cashflowDate: string | null;
+};
+
+export type PlatformQrTotals = {
+  total: number;
+  paid: number;
+  pending: number;
+  cancelled: number;
+  amount: number;
+  cashflow: number;
+};
+
 export type PlatformOverview = {
   manualInputs: PlatformAdminInputs;
   inputs: AdminInputs;
   metrics: AdminMetrics;
   subscribers: PlatformSubscriber[];
+  qrPayments: PlatformQrPayment[];
+  qrTotals: PlatformQrTotals;
   totals: {
     total: number;
     active: number;
@@ -215,11 +245,72 @@ export function normalizePlatformSubscription(value: unknown): PlatformSubscript
   };
 }
 
+function cashflowForOrder(rows: unknown[], orderId: string) {
+  const row = rows.find((value) => {
+    if (!isRecord(value)) return false;
+    return text(value["order_id"] ?? value["orderId"]) === orderId;
+  });
+  if (!isRecord(row)) return { amount: null, date: null };
+  const rawAmount = row["amount"];
+  const parsedAmount = typeof rawAmount === "number" ? rawAmount : Number(rawAmount);
+  return {
+    amount: Number.isFinite(parsedAmount) ? parsedAmount : null,
+    date: nullableText(row["transaction_date"] ?? row["transactionDate"]),
+  };
+}
+
+export function normalizePlatformQrPayment(
+  value: unknown,
+  cashflowRows: unknown[] = [],
+): PlatformQrPayment | null {
+  if (!isRecord(value)) return null;
+  const paymentMethod = text(value["payment_method"] ?? value["paymentMethod"]).toLowerCase();
+  const checkoutUrl = nullableText(value["checkout_url"] ?? value["checkoutUrl"]);
+  const preferenceId = nullableText(value["mp_preference_id"] ?? value["mpPreferenceId"]);
+  const isQrPayment =
+    paymentMethod === "mp_checkout_pro" ||
+    paymentMethod === "manual_pix" ||
+    !!checkoutUrl ||
+    !!preferenceId;
+  if (!isQrPayment) return null;
+
+  const id = text(value["id"]);
+  const orderId = id || text(value["order_id"] ?? value["orderId"]);
+  const cashflow = cashflowForOrder(cashflowRows, orderId);
+  return {
+    id,
+    orderId,
+    sellerId: nullableText(value["user_id"] ?? value["userId"]),
+    customerName: nullableText(value["customer_name"] ?? value["customerName"]),
+    customerWhatsapp: nullableText(value["customer_whatsapp"] ?? value["customerWhatsapp"]),
+    status: text(value["status"], "pending").toLowerCase(),
+    paymentMethod,
+    amount: num(value["total_amount"] ?? value["totalAmount"] ?? value["amount"]),
+    currency: text(value["currency"], "BRL"),
+    paymentId: nullableText(value["mp_payment_id"] ?? value["mpPaymentId"]),
+    preferenceId,
+    checkoutUrl,
+    createdAt: nullableText(value["created_at"] ?? value["createdAt"]),
+    paidAt: nullableText(value["paid_at"] ?? value["paidAt"]),
+    cashflowAmount: cashflow.amount,
+    cashflowDate: cashflow.date,
+  };
+}
+
 const activeStatuses = new Set(["active", "authorized", "confirmed", "paid"]);
 
 function isActive(subscription: PlatformSubscription) {
   return activeStatuses.has(subscription.status) && !subscription.cancelledAt;
 }
+
+const paidQrStatuses = new Set(["paid", "approved", "completed", "confirmed", "authorized"]);
+const cancelledQrStatuses = new Set([
+  "cancelled",
+  "canceled",
+  "rejected",
+  "refunded",
+  "charged_back",
+]);
 
 function parseDate(value: string | null) {
   if (!value) return null;
@@ -366,20 +457,35 @@ export function buildPlatformOverview(
   subscriptionRows: unknown[],
   inputRow: unknown,
   profileRows: unknown[],
+  qrPaymentRows: unknown[] = [],
+  cashflowRows: unknown[] = [],
 ): PlatformOverview {
   const subscriptions = subscriptionRows
     .map(normalizePlatformSubscription)
     .filter((row): row is PlatformSubscription => row !== null);
+  const qrPayments = qrPaymentRows
+    .map((row) => normalizePlatformQrPayment(row, cashflowRows))
+    .filter((row): row is PlatformQrPayment => row !== null);
   const manual = normalizePlatformAdminInputs(inputRow);
   const inputs = derivePlatformInputs(subscriptions, manual);
   const active = subscriptions.filter(isActive);
   const mrr = active.reduce((sum, subscription) => sum + subscription.amount, 0);
+  const paidQrPayments = qrPayments.filter((payment) => paidQrStatuses.has(payment.status));
 
   return {
     manualInputs: manual,
     inputs,
     metrics: calculateAdminMetrics(inputs),
     subscribers: subscriptions,
+    qrPayments,
+    qrTotals: {
+      total: qrPayments.length,
+      paid: paidQrPayments.length,
+      pending: qrPayments.filter((payment) => payment.status === "pending").length,
+      cancelled: qrPayments.filter((payment) => cancelledQrStatuses.has(payment.status)).length,
+      amount: paidQrPayments.reduce((sum, payment) => sum + payment.amount, 0),
+      cashflow: qrPayments.reduce((sum, payment) => sum + (payment.cashflowAmount ?? 0), 0),
+    },
     totals: {
       total: subscriptions.length,
       active: active.length,

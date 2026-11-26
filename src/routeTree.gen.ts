@@ -14,9 +14,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AssinarRouteImport } from './routes/assinar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as GestaoPlataformaRouteImport } from './routes/gestao-plataforma'
 import { Route as MpCallbackRouteImport } from './routes/mp-callback'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCopilotoRouteImport } from './routes/_authenticated/copiloto'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -48,6 +48,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GestaoPlataformaRoute = GestaoPlataformaRouteImport.update({
+  id: '/gestao-plataforma',
+  path: '/gestao-plataforma',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MpCallbackRoute = MpCallbackRouteImport.update({
   id: '/mp-callback',
   path: '/mp-callback',
@@ -57,11 +62,6 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
@@ -101,9 +101,9 @@ export interface FileRoutesByFullPath {
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/copiloto': typeof AuthenticatedCopilotoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -116,9 +116,9 @@ export interface FileRoutesByTo {
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/copiloto': typeof AuthenticatedCopilotoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -133,9 +133,9 @@ export interface FileRoutesById {
   '/assinar': typeof AssinarRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/gestao-plataforma': typeof GestaoPlataformaRoute
   '/mp-callback': typeof MpCallbackRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/copiloto': typeof AuthenticatedCopilotoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -150,9 +150,9 @@ export interface FileRouteTypes {
     | '/assinar'
     | '/auth'
     | '/demo'
+    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
-    | '/admin'
     | '/configuracoes'
     | '/copiloto'
     | '/dashboard'
@@ -165,9 +165,9 @@ export interface FileRouteTypes {
     | '/assinar'
     | '/auth'
     | '/demo'
+    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
-    | '/admin'
     | '/configuracoes'
     | '/copiloto'
     | '/dashboard'
@@ -181,9 +181,9 @@ export interface FileRouteTypes {
     | '/assinar'
     | '/auth'
     | '/demo'
+    | '/gestao-plataforma'
     | '/mp-callback'
     | '/reset-password'
-    | '/_authenticated/admin'
     | '/_authenticated/configuracoes'
     | '/_authenticated/copiloto'
     | '/_authenticated/dashboard'
@@ -198,6 +198,7 @@ export interface RootRouteChildren {
   AssinarRoute: typeof AssinarRoute
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
+  GestaoPlataformaRoute: typeof GestaoPlataformaRoute
   MpCallbackRoute: typeof MpCallbackRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
 }
@@ -239,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gestao-plataforma': {
+      id: '/gestao-plataforma'
+      path: '/gestao-plataforma'
+      fullPath: '/gestao-plataforma'
+      preLoaderRoute: typeof GestaoPlataformaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mp-callback': {
       id: '/mp-callback'
       path: '/mp-callback'
@@ -252,13 +260,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
@@ -306,7 +307,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedCopilotoRoute: typeof AuthenticatedCopilotoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -316,7 +316,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedCopilotoRoute: AuthenticatedCopilotoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
@@ -334,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   AssinarRoute: AssinarRoute,
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
+  GestaoPlataformaRoute: GestaoPlataformaRoute,
   MpCallbackRoute: MpCallbackRoute,
   ResetPasswordRoute: ResetPasswordRoute,
 }

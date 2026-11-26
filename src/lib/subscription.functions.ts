@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { SUBSCRIPTION_PRICE, SUBSCRIPTION_REASON } from "@/lib/subscription";
@@ -46,7 +47,23 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       );
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as SupabaseClient;
+    const externalReference = crypto.randomUUID();
+    const { error: createError } = await admin.from("platform_subscriptions").insert({
+      email: data.email,
+      external_reference: externalReference,
+      status: "pending",
+      amount: SUBSCRIPTION_PRICE,
+      currency: "BRL",
+    });
+    if (createError) throw new Error(createError.message);
+
     const siteUrl = resolveSiteUrl();
+    const supabaseUrl = process.env["SUPABASE_URL"];
+    const notificationUrl = supabaseUrl
+      ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/subscription-webhook`
+      : undefined;
     const response = await fetch("https://api.mercadopago.com/preapproval", {
       method: "POST",
       headers: {
@@ -55,7 +72,7 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({
         reason: SUBSCRIPTION_REASON,
-        external_reference: `mestrra-${Date.now()}`,
+        external_reference: externalReference,
         payer_email: data.email,
         auto_recurring: {
           frequency: 1,
@@ -64,12 +81,17 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
           currency_id: "BRL",
         },
         back_url: new URL("/assinar?checkout=concluido", siteUrl).toString(),
+        ...(notificationUrl ? { notification_url: notificationUrl } : {}),
       }),
     });
 
     const payload = (await response.json().catch(() => null)) as MercadoPagoSubscription | null;
 
     if (!response.ok) {
+      await admin
+        .from("platform_subscriptions")
+        .update({ status: "failed", updated_at: new Date().toISOString() })
+        .eq("external_reference", externalReference);
       const message =
         payload && "message" in payload && typeof payload.message === "string"
           ? payload.message
@@ -77,8 +99,17 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       throw new Error(message);
     }
 
-    return {
-      checkoutUrl: normalizeCheckoutUrl(payload?.init_point),
-      subscriptionId: typeof payload?.id === "string" ? payload.id : null,
-    };
+    const checkoutUrl = normalizeCheckoutUrl(payload?.init_point);
+    const subscriptionId = typeof payload?.id === "string" ? payload.id : null;
+    const { error: updateError } = await admin
+      .from("platform_subscriptions")
+      .update({
+        preapproval_id: subscriptionId,
+        checkout_url: checkoutUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("external_reference", externalReference);
+    if (updateError) throw new Error(updateError.message);
+
+    return { checkoutUrl, subscriptionId, externalReference };
   });

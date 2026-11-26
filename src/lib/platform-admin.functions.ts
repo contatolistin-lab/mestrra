@@ -133,8 +133,6 @@ export const getPlatformAdminDiagnostics = createServerFn({ method: "GET" }).han
   if (!hasEnv) {
     return {
       env: false,
-      url: null,
-      publishableKey: null,
       allowlist: "variáveis ausentes",
       subscriptions: "variáveis ausentes",
       inputs: "variáveis ausentes",
@@ -151,8 +149,6 @@ export const getPlatformAdminDiagnostics = createServerFn({ method: "GET" }).han
 
   return {
     env: true,
-    url: process.env["SUPABASE_URL"] ?? null,
-    publishableKey: process.env["SUPABASE_PUBLISHABLE_KEY"] ?? null,
     allowlist: await check("admin_allowlist"),
     subscriptions: await check("platform_subscriptions"),
     inputs: await check("platform_admin_inputs"),

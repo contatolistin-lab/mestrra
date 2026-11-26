@@ -21,7 +21,6 @@ dist-ssr
 .dev.vars
 
 # Env
-.env
 .env.*
 !.env.example
 

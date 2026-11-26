@@ -102,6 +102,20 @@ function GestaoPlataformaPage() {
   return <PlatformAdminPanel overview={overview} onSaved={loadOverview} onSignOut={signOut} />;
 }
 
+function describeAuthError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Não foi possível continuar.";
+  if (/invalid login credentials/i.test(message)) {
+    return "E-mail ou senha incorretos, ou e-mail ainda não confirmado.";
+  }
+  if (/email not confirmed/i.test(message)) {
+    return "Confirme o link enviado ao seu e-mail antes de entrar.";
+  }
+  if (/already registered|already been registered/i.test(message)) {
+    return "Este e-mail já está cadastrado. Use Entrar ou recupere a senha.";
+  }
+  return message;
+}
+
 function AdminLogin({
   onSignedIn,
   initialNotice,
@@ -118,11 +132,21 @@ function AdminLogin({
     if (initialNotice) setNotice(initialNotice);
   }, [initialNotice]);
 
+  function showError(message: string) {
+    setNotice(message);
+    toast.error(message);
+  }
+
+  function showSuccess(message: string) {
+    setNotice(message);
+    toast.success(message);
+  }
+
   async function recover() {
     if (!formRef.current) return;
     const email = String(new FormData(formRef.current).get("email") || "").trim();
     if (!email) {
-      toast.error("Informe o e-mail para recuperar a senha.");
+      showError("Informe o e-mail para recuperar a senha.");
       return;
     }
 
@@ -130,9 +154,29 @@ function AdminLogin({
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
-      toast.success("Se o e-mail existir, enviaremos o link de recuperação.");
+      showSuccess("Se o e-mail existir, enviaremos o link de recuperação.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível recuperar a senha.");
+      showError(describeAuthError(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!formRef.current) return;
+    const email = String(new FormData(formRef.current).get("email") || "").trim();
+    if (!email) {
+      showError("Informe o e-mail para reenviar a confirmação.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) throw error;
+      showSuccess("Reenviamos o link de confirmação. Verifique a caixa de entrada e o spam.");
+    } catch (error) {
+      showError(describeAuthError(error));
     } finally {
       setBusy(false);
     }
@@ -155,24 +199,25 @@ function AdminLogin({
             "Não foi possível validar a allowlist administrativa. Confira o SQL aplicado.",
           );
         }
-        if (!allowed) throw new Error("Este e-mail não está liberado para a gestão da plataforma.");
+        if (!allowed) {
+          showError("Este e-mail não está liberado para a gestão da plataforma.");
+          return;
+        }
 
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) {
           if (/already registered|already been registered/i.test(error.message)) {
-            setNotice("Este e-mail já está cadastrado. Use Entrar ou recupere a senha.");
             setMode("login");
-            toast.error("Este e-mail já está cadastrado. Use Entrar.");
+            showError("Este e-mail já está cadastrado. Use Entrar ou recupere a senha.");
             return;
           }
           throw error;
         }
         if (!data.session) {
-          setNotice(
+          setMode("login");
+          showSuccess(
             "Se o e-mail ainda não estava cadastrado, confirme o link enviado. Se já estava, use Entrar ou recupere a senha.",
           );
-          setMode("login");
-          toast.success("Verifique seu e-mail ou entre com a senha já cadastrada.");
           return;
         }
         onSignedIn(data.session);
@@ -183,7 +228,7 @@ function AdminLogin({
       if (error) throw error;
       onSignedIn(data.session);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível continuar.");
+      showError(describeAuthError(error));
     } finally {
       setBusy(false);
     }
@@ -247,14 +292,24 @@ function AdminLogin({
           </Button>
         </form>
         {mode === "login" ? (
-          <button
-            type="button"
-            disabled={busy}
-            className="mt-4 text-sm text-muted-foreground hover:underline"
-            onClick={recover}
-          >
-            Esqueci minha senha
-          </button>
+          <div className="mt-4 flex flex-col items-start gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              className="text-sm text-muted-foreground hover:underline"
+              onClick={recover}
+            >
+              Esqueci minha senha
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              className="text-sm text-muted-foreground hover:underline"
+              onClick={resendConfirmation}
+            >
+              Reenviar e-mail de confirmação
+            </button>
+          </div>
         ) : null}
         <button
           type="button"

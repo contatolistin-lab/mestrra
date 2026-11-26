@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { Database } from "../../../src/integrations/supabase/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ type MpConnection = {
   expires_at: string | null;
 };
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = ReturnType<typeof createClient<Database>>;
 
 function publicSiteUrl(req: Request) {
   const configured = Deno.env.get("SITE_URL") ?? Deno.env.get("APP_URL");
@@ -73,7 +74,7 @@ Deno.serve(async (req: Request) => {
     const { orderId } = await req.json();
     if (!orderId) throw new Error("Pedido não informado.");
 
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );

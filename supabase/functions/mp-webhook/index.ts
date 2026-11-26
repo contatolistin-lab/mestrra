@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { Database } from "../../../src/integrations/supabase/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +23,7 @@ type MpConnection = {
   expires_at: string | null;
 };
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = ReturnType<typeof createClient<Database>>;
 
 async function validAccessToken(
   supabase: SupabaseClient,
@@ -125,7 +126,7 @@ async function validSignature(req: Request, dataId: string) {
 }
 
 async function stockIsAvailable(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   order: OrderRow,
 ) {
   const { data: item } = await supabase
@@ -169,7 +170,7 @@ async function stockIsAvailable(
 }
 
 async function reversePaidOrder(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   order: OrderRow,
 ) {
   const { data: recipes } = await supabase
@@ -221,7 +222,7 @@ Deno.serve(async (req: Request) => {
       return response({ received: false, reason: signature.reason }, signature.status);
     }
 
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );

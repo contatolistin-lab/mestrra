@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { Database } from "../../../src/integrations/supabase/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,7 @@ Deno.serve(async (req: Request) => {
       return response({ error: "Dados da venda inválidos." }, 400);
     }
 
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
@@ -187,7 +188,7 @@ Deno.serve(async (req: Request) => {
     return response({ orderId: String(order.id) });
   } catch (error) {
     if (userId && applied.length) {
-      const supabase = createClient(
+      const supabase = createClient<Database>(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       );
@@ -201,7 +202,7 @@ Deno.serve(async (req: Request) => {
 });
 
 async function rollbackStock(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createClient<Database>>,
   userId: string,
   rows: Requirement[],
 ) {

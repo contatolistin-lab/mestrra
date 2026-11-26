@@ -1,5 +1,7 @@
 # mestrra
 
+- [x] Confirmar conexão com Lovable Cloud e leitura autenticada; corrigir tipagem das funções legadas de vendas e cobranças.
+
 - [x] Revisar textos e visual da landing page, com destaque para plano e FAQ; validar no desktop e celular.
 
 - [x] 1. Identidade visual, navegação, acesso e perfil inicial.

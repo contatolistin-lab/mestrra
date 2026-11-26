@@ -26,12 +26,13 @@ export const Route = createFileRoute("/admin")({
   component: GestaoPlataformaPage,
 });
 
-type AccessState = "checking" | "login" | "verifying" | "ready" | "denied";
+type AccessState = "checking" | "login" | "verifying" | "ready";
 
 function GestaoPlataformaPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<AccessState>("checking");
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     setOverview(await getPlatformOverview());
@@ -61,11 +62,14 @@ function GestaoPlataformaPage() {
         setOverview(data);
         setStatus("ready");
       } catch {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
         if (cancelled) return;
         setSession(null);
         setOverview(null);
-        setStatus("denied");
+        setLoginNotice(
+          "Esta conta não tem permissão para a gestão da plataforma. Entre com outro e-mail ou cadastre o acesso.",
+        );
+        setStatus("login");
       }
     })();
     return () => {
@@ -74,9 +78,10 @@ function GestaoPlataformaPage() {
   }, [session]);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     setSession(null);
     setOverview(null);
+    setLoginNotice(null);
     setStatus("login");
   }
 
@@ -88,30 +93,8 @@ function GestaoPlataformaPage() {
     );
   }
 
-  if (status === "denied") {
-    return (
-      <main className="auth-layout">
-        <section className="auth-brand">
-          <Brand />
-        </section>
-        <section className="auth-form">
-          <div className="icon-tile mb-6">
-            <LockKeyhole size={20} />
-          </div>
-          <h2 className="text-2xl font-extrabold">Acesso negado.</h2>
-          <p className="text-sm text-muted-foreground mt-3 mb-8">
-            Esta conta não tem permissão para a gestão da plataforma.
-          </p>
-          <Button className="w-full" onClick={() => setStatus("login")}>
-            Tentar outro e-mail <ArrowRight size={16} />
-          </Button>
-        </section>
-      </main>
-    );
-  }
-
   if (!session || status === "login") {
-    return <AdminLogin onSignedIn={setSession} />;
+    return <AdminLogin onSignedIn={setSession} initialNotice={loginNotice} />;
   }
 
   if (!overview) return null;
@@ -119,11 +102,21 @@ function GestaoPlataformaPage() {
   return <PlatformAdminPanel overview={overview} onSaved={loadOverview} onSignOut={signOut} />;
 }
 
-function AdminLogin({ onSignedIn }: { onSignedIn: (session: Session | null) => void }) {
+function AdminLogin({
+  onSignedIn,
+  initialNotice,
+}: {
+  onSignedIn: (session: Session | null) => void;
+  initialNotice: string | null;
+}) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(initialNotice);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (initialNotice) setNotice(initialNotice);
+  }, [initialNotice]);
 
   async function recover() {
     if (!formRef.current) return;

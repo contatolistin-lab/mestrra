@@ -43,9 +43,12 @@ function CallbackPage() {
     }
     void supabase.functions
       .invoke("mp-oauth-exchange", { body: { code, state } })
-      .then(async ({ error }) => {
+      .then(async ({ data, error }) => {
         if (error) throw error;
-        setMessage("Conta conectada! O dinheiro das vendas cai direto na sua conta Mercado Pago.");
+        const accountId = typeof data?.accountId === "string" ? data.accountId : null;
+        setMessage(
+          `${accountId ? `Conta ${accountId} conectada! ` : "Conta conectada! "}O dinheiro das vendas cai direto na sua conta Mercado Pago.`,
+        );
         await Promise.all([
           client.invalidateQueries({ queryKey: ["business"] }),
           client.invalidateQueries({ queryKey: ["mp-status"] }),

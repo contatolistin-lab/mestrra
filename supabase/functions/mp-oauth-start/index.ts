@@ -25,6 +25,26 @@ Deno.serve(async (req: Request) => {
     if (!clientId || !redirectUri)
       throw new Error("Configure MP_CLIENT_ID e MP_REDIRECT_URI nas secrets do Supabase.");
 
+    let redirectUrl: URL;
+    try {
+      redirectUrl = new URL(redirectUri);
+    } catch {
+      throw new Error("MP_REDIRECT_URI deve ser uma URL válida.");
+    }
+    const localHosts = ["localhost", "127.0.0.1"];
+    if (
+      !["https:", "http:"].includes(redirectUrl.protocol) ||
+      (redirectUrl.protocol === "http:" && !localHosts.includes(redirectUrl.hostname))
+    ) {
+      throw new Error("MP_REDIRECT_URI deve usar HTTPS, exceto em localhost.");
+    }
+
+    const { error: cleanupError } = await supabase
+      .from("oauth_states")
+      .delete()
+      .eq("user_id", auth.user.id);
+    if (cleanupError) throw cleanupError;
+
     const state = crypto.randomUUID();
     const verifier = crypto.randomUUID();
     const { error } = await supabase.from("oauth_states").insert({
@@ -39,7 +59,7 @@ Deno.serve(async (req: Request) => {
     authorize.searchParams.set("client_id", clientId);
     authorize.searchParams.set("response_type", "code");
     authorize.searchParams.set("platform_id", "mp");
-    authorize.searchParams.set("redirect_uri", redirectUri);
+    authorize.searchParams.set("redirect_uri", redirectUrl.toString());
     authorize.searchParams.set("state", state);
 
     return new Response(JSON.stringify({ url: authorize.toString() }), {

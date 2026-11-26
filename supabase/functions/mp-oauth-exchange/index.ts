@@ -15,6 +15,8 @@ Deno.serve(async (req: Request) => {
 
     const { code, state } = await req.json();
     if (!code) throw new Error("Código de autorização ausente.");
+    if (typeof state !== "string" || !state)
+      throw new Error("Solicitação de conexão inválida. Recomece em Configurações.");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -23,13 +25,22 @@ Deno.serve(async (req: Request) => {
     const { data: auth, error: authError } = await supabase.auth.getUser(token);
     if (authError || !auth.user) throw new Error("Usuário não autenticado.");
 
+    const now = new Date();
+    const { error: cleanupError } = await supabase
+      .from("oauth_states")
+      .delete()
+      .eq("user_id", auth.user.id)
+      .lt("expires_at", now.toISOString());
+    if (cleanupError) throw cleanupError;
+
     const { data: savedState, error: stateError } = await supabase
       .from("oauth_states")
       .select("*")
-      .eq("state", state || "")
+      .eq("state", state)
       .eq("user_id", auth.user.id)
-      .single();
-    if (stateError || !savedState || new Date(savedState.expires_at) < new Date()) {
+      .maybeSingle();
+    if (stateError) throw stateError;
+    if (!savedState || new Date(savedState.expires_at) < now) {
       throw new Error("Solicitação de conexão inválida ou expirada. Tente novamente.");
     }
 
@@ -50,37 +61,41 @@ Deno.serve(async (req: Request) => {
         redirect_uri: redirectUri,
       }),
     });
-    const credentials = await response.json();
+    const credentials = await response.json().catch(() => ({}));
     if (!response.ok || !credentials.access_token) {
-      throw new Error(credentials.message || "Não foi possível trocar o código pelos tokens.");
+      throw new Error(
+        typeof credentials.message === "string"
+          ? credentials.message
+          : "Não foi possível trocar o código pelos tokens.",
+      );
     }
 
     let publicKey: string | null =
       typeof credentials.public_key === "string" ? credentials.public_key : null;
+    let accountId: string | null = credentials.user_id ? String(credentials.user_id) : null;
     const settingsResponse = await fetch("https://api.mercadopago.com/v1/account/settings", {
       headers: { Authorization: `Bearer ${credentials.access_token}` },
     });
-    if (settingsResponse.ok) {
-      const settings = await settingsResponse.json();
-      publicKey = publicKey || settings.public_key || null;
+    if (settingsResponse.status === 401) {
+      throw new Error("A autorização do Mercado Pago expirou. Reconecte sua conta.");
     }
-
-    const { error: stateDeleteError } = await supabase
-      .from("oauth_states")
-      .delete()
-      .eq("state", savedState.state);
-    if (stateDeleteError) throw stateDeleteError;
+    if (settingsResponse.ok) {
+      const settings = await settingsResponse.json().catch(() => ({}));
+      publicKey =
+        publicKey || (typeof settings.public_key === "string" ? settings.public_key : null);
+      accountId = accountId || (settings.id ? String(settings.id) : null);
+    }
 
     const { error: connectionError } = await supabase.from("payment_connections").upsert({
       user_id: auth.user.id,
       access_token: credentials.access_token,
       refresh_token: credentials.refresh_token ?? null,
-      mp_user_id: credentials.user_id ? String(credentials.user_id) : null,
+      mp_user_id: accountId,
       public_key: publicKey,
       expires_at: new Date(
         Date.now() + Number(credentials.expires_in || 3600) * 1000,
       ).toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: now.toISOString(),
     });
     if (connectionError) throw connectionError;
 
@@ -90,7 +105,13 @@ Deno.serve(async (req: Request) => {
       .eq("id", auth.user.id);
     if (profileError) throw profileError;
 
-    return new Response(JSON.stringify({ connected: true }), {
+    const { error: stateDeleteError } = await supabase
+      .from("oauth_states")
+      .delete()
+      .eq("user_id", auth.user.id);
+    if (stateDeleteError) throw stateDeleteError;
+
+    return new Response(JSON.stringify({ connected: true, accountId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

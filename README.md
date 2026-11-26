@@ -33,6 +33,8 @@ Copie `.env.example` para `.env` e preencha apenas as variáveis públicas `VITE
 - Webhooks: `MP_WEBHOOK_SECRET` para vendas e `MP_SUBSCRIPTION_WEBHOOK_SECRET` para assinaturas (se o mesmo segredo for usado no painel do MP, configure o mesmo valor nas duas variáveis).
 - `SITE_URL` ou `APP_URL` define o domínio usado nos retornos de checkout.
 
+Cada usuário conecta apenas a própria conta Mercado Pago em Configurações. O fluxo usa um `state` único por tentativa, associado ao usuário autenticado e válido por 10 minutos; iniciar uma nova tentativa cancela a anterior. Após a autorização, access token e refresh token ficam em `payment_connections`, isolados por `user_id`, e a conta identificada é exibida na tela. Trocar ou desconectar a conta nunca afeta outros usuários.
+
 No aplicativo do Mercado Pago, cadastre como Redirect URL exatamente o valor de `MP_REDIRECT_URI`, apontando para `/mp-callback`. As URLs de notificação são:
 
 - Vendas: `<SUPABASE_URL>/functions/v1/mp-webhook?user_id=<uuid>`

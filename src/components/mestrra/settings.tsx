@@ -53,7 +53,7 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
       ]);
       toast.success("Conta Mercado Pago desconectada.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível desconectar.");
+      toast.error(await readFunctionError(error, "Não foi possível desconectar. Tente novamente."));
     } finally {
       setDisconnecting(false);
     }
@@ -106,6 +106,8 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
             >
               {statusQuery.isPending ? (
                 "Verificando sua conexão com o Mercado Pago..."
+              ) : statusQuery.isError ? (
+                "Não foi possível verificar sua conexão. Tente recarregar a página."
               ) : status?.connected ? (
                 <>
                   <CheckCircle2 size={16} className="text-success" />
@@ -159,8 +161,9 @@ export function SettingsPanel({ data }: { data: BusinessData }) {
               </span>
             </div>
             <p>
-              A autorização é usada apenas para criar cobranças e confirmar pagamentos. Você pode
-              trocar ou remover a conta conectada quando quiser.
+              A autorização é usada apenas para criar cobranças e confirmar pagamentos. Cada usuário
+              conecta somente a própria conta: os tokens ficam isolados por usuário e nunca são
+              compartilhados entre negócios. Você pode trocar ou remover a conta quando quiser.
             </p>
             <Button variant="link" className="h-auto p-0 text-info text-[11px]" asChild>
               <Link to="/vendas" search={{ itemId: undefined }}>
